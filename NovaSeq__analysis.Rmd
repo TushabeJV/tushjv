@@ -1,0 +1,1346 @@
+---
+title: "NovaSeq_Analysis"
+author: "Tush"
+date: "18/04/2019"
+output:html_document
+---
+
+#pca-174 # 01/06/2020
+```{r  }
+library(ggplot2)
+library(ggnewscale)
+library(RColorBrewer)
+
+egvec_174 <- read.delim(file.choose())
+egval_174 <- read.delim(file.choose(), header = FALSE)
+pdata <- read.csv(file.choose())
+
+egvec_merge174 <- merge(pdata, egvec_174, by.x = "Sanger_Sample_ID", by.y ="IID")
+
+sum_egval174<-sum(egval_174$V1)
+sum_egval174<-lapply(egval_174$V1,function(x){
+  rt<-(x/sum_egval174)*100
+  rt<-round(rt)
+  return(rt)
+})
+
+ggplot(egvec_merge174, aes((PC1),(PC2))) + geom_point(aes(color=as.factor(Time.point)), size=1) + theme_bw() + xlab(paste0("PC1 (",sum_egval174[[1]],"% total variance)")) + ylab(paste0("PC2 (",sum_egval174[[2]],"% total variance)")) + scale_color_discrete(name = "Time-point") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge174, aes((PC1),(PC2))) + geom_point(aes(color=as.factor(Treatment)), size=1) + theme_bw() + 
+xlab(paste0("PC1 (",sum_egval174[[1]],"% total variance)")) + ylab(paste0("PC2 (",sum_egval174[[2]],"% total variance)")) + scale_color_discrete(name = "Treatment") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge174, aes((PC1),(PC2))) + geom_point(aes(color=as.factor(Island)), size=1) + theme_bw() + xlab(paste0("PC1 (",sum_egval174[[1]],"% total variance)")) + ylab(paste0("PC2 (",sum_egval174[[2]],"% total variance)")) + scale_color_discrete(name = "Treatment") + theme(plot.title = element_text(hjust = 0.5))
+#************************************************************************#
+
+egvec_merge174$PC2>0.6
+
+ggplot(egvec_merge174, aes((PC3),(PC4))) + geom_point(aes(color=as.factor(Island)), size=1) + theme_bw() + 
+xlab(paste0("PC3 (",sum_egval174[[3]],"% total variance)")) +
+ylab(paste0("PC4 (",sum_egval174[[4]],"% total variance)")) + scale_color_discrete(name = "Location") + ggtitle("Population stratification by sample location") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge174, aes((PC5),(PC6))) + geom_point(aes(color=as.factor(Time.point)), size=1) + theme_bw() + 
+xlab(paste0("PC5 (",sum_egval174[[5]],"% total variance)")) +
+ylab(paste0("PC6 (",sum_egval174[[6]],"% total variance)")) + scale_color_discrete(name = "Treatment") + ggtitle("Population stratification by Time point") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge174, aes((PC7),(PC8))) + geom_point(aes(color=as.factor(Treatment))) + theme_bw() + 
+xlab(paste0("PC7 (",sum_egval174[[7]],"% total variance)")) +
+ylab(paste0("PC8 (",sum_egval174[[8]],"% total variance)")) + scale_color_discrete(name = "Treatment") + ggtitle("Population stratification by Treatment") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge174, aes((PC9),(PC10))) + geom_point(aes(color=as.factor(Time.point))) + theme_bw() + 
+xlab(paste0("PC9 (",sum_egval174[[9]],"% total variance)")) +
+ylab(paste0("PC10 (",sum_egval174[[10]],"% total variance)")) + scale_color_discrete(name = "Treatment") + ggtitle("Population stratification by time-point") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+#pca_201 #01/06/2020
+```{r }
+library(ggnewscale)
+library(RColorBrewer)
+library(ggplot2)
+
+egvec_201 <- read.delim(file.choose())
+egval_201 <- read.delim(file.choose(), header = FALSE)
+pdata_2 <- read.csv(file.choose())
+egvec_merge201 <- merge(pdata_2, egvec_201, by.x = "Sanger_Sample_ID", by.y ="IID")
+
+sum_egval201<-sum(egval_201$V1)
+sum_egval201<-lapply(egval_201$V1,function(x){
+  rt<-(x/sum_egval201)*100
+  rt<-round(rt)
+  return(rt)
+})
+
+#make a look-up table to get them in the right order
+color_lookup <- setNames(c(brewer.pal(8,"Set1"),rep("grey80",3),"grey50"),c(as.character(unique(egvec_merge201$Vname[egvec_merge201$Location == "Island"])),as.character(unique(egvec_merge201$Vname[egvec_merge201$Location == "Shoreline"])),as.character(unique(egvec_merge201$Vname[egvec_merge201$Location == "Inland"]))))
+
+VillageColors <- color_lookup[levels(egvec_merge201$Vname)]
+
+ggplot(egvec_merge201, aes((PC1),(PC2))) + geom_point(aes(color=as.factor(Location)),size=3) + scale_color_manual(values=c("grey50","grey30","grey80"),name = "Group") + new_scale_color() + geom_point(aes(color=as.factor(Vname)),size=1.5) + scale_color_manual(values=VillageColors,name = "Village",limits= as.character(unique(egvec_merge201$Vname[egvec_merge201$Location == "Island"])) ) + theme_bw() +xlab(paste0("PC1 (",sum_egval201[[1]],"% total variance)")) +ylab(paste0("PC2 (",sum_egval201[[2]],"% total variance)")) +  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge201, aes((PC1),(PC2))) + geom_point(aes(color=as.factor(Location)), size=1) + theme_bw() + 
+xlab(paste0("PC1 (",sum_egval201[[1]],"% total variance)")) +
+ylab(paste0("PC2 (",sum_egval201[[2]],"% total variance)")) + scale_color_discrete(name = "Location") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge201, aes((PC1),(PC2))) + geom_point(aes(color=as.factor(Vname)), size=1) + theme_bw() + 
+xlab(paste0("PC1 (",sum_egval201[[1]],"% total variance)")) +
+ylab(paste0("PC2 (",sum_egval201[[2]],"% total variance)")) + scale_color_discrete(name = "Vname") + theme(plot.title = element_text(hjust = 0.5))
+
+dots9 <- egvec_201$PC2<-0.2
+xx <- pdata %>% filter(Treatment=="Intensive", Tp == 2)
+
+egvec_201$PC2< -0.2
+
+ggplot(egvec_merge201, aes((PC3),(PC4))) + geom_point(aes(color=as.factor(Location)), size=1) + theme_bw() + 
+xlab(paste0("PC3 (",sum_egval201[[3]],"% total variance)")) +
+ylab(paste0("PC4 (",sum_egval201[[4]],"% total variance)")) + scale_color_discrete(name = "Location") + theme(plot.title = element_text(hjust = 0.5)) #+geom_point(aes(shape=Vname))
+
+ggplot(egvec_merge201, aes((PC5),(PC6))) + geom_point(aes(color=as.factor(Location))) + theme_bw() + 
+xlab(paste0("PC5 (",sum_egval201[[5]],"% total variance)")) +
+ylab(paste0("PC6 (",sum_egval201[[6]],"% total variance)")) + scale_color_discrete(name = "Location") + ggtitle("Population stratification by Location") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge201, aes((PC7),(PC8))) + geom_point(aes(color=as.factor(Location))) + theme_bw() + 
+xlab(paste0("PC7 (",sum_egval201[[7]],"% total variance)")) +
+ylab(paste0("PC8 (",sum_egval201[[8]],"% total variance)")) + scale_color_discrete(name = "Location") + ggtitle("Population stratification by location") + theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(egvec_merge201, aes((PC9),(PC10))) + geom_point(aes(color=as.factor(Location))) + theme_bw() + 
+xlab(paste0("PC9 (",sum_egval201[[9]],"% total variance)")) +
+ylab(paste0("PC10 (",sum_egval201[[10]],"% total variance)")) + scale_color_discrete(name = "Location") + ggtitle("Population stratification by location") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+#Fixation Index Test#
+```{r }
+fst_arm10kb <- read.table(file.choose(), header = T)
+fst_tpt25kb <- read.table(file.choose(), header = T)
+fst_Island10kb <- read.table(file.choose(), header = T)
+fst_islands.outgrp10kb <- read.table(file.choose(), header = T)
+fst_islands.shoreline10kb <- read.table(file.choose(), header = T)
+fst_islands.inland10kb <- read.table(file.choose(), header = T)
+fst_inland.shoreline10kb <- read.table(file.choose(), header = T)
+pre10kb_std.int <- read.table(file.choose(), header = T)
+post10kb_std.int <- read.table(file.choose(), header = T)
+pre.post_10kb <- read.table(file.choose(), header = T)
+
+pre.std_int.10kb <- subset(pre10kb_std.int, CHROM=="SM_V7_1" | CHROM=="SM_V7_ZW" | CHROM=="SM_V7_3" |  CHROM=="SM_V7_4" | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_2")
+pre.std_int.10kb$JV <- seq.int(nrow(pre.std_int.10kb))
+
+post.std_int.10kb <- subset(post10kb_std.int, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" | CHROM=="SM_V7_4" | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+
+post.std_int.10kb$TJ <- seq.int(nrow(post.std_int.10kb))
+
+post_pre.10kb <- subset(pre.post_10kb, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" | CHROM=="SM_V7_4" | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+#***************************************#pre
+
+#assumes you have your data per window in a big vector called ALL_FST_VALUES
+mean_FST_pre <- mean(pre.std_int.10kb$WEIGHTED_FST)
+median_FST_pre <- median(pre.std_int.10kb$WEIGHTED_FST)
+bstrap_means_pre <- c()
+bstrap_medians_pre <- c()
+for (i in 1:100) { 
+ bstrap_medians_pre <- c(bstrap_medians_pre,median(sample(pre.std_int.10kb$WEIGHTED_FST,size=length(pre.std_int.10kb$WEIGHTED_FST),replace=TRUE)))
+ bstrap_means_pre <- c(bstrap_means_pre,mean(sample(pre.std_int.10kb$WEIGHTED_FST,size=length(pre.std_int.10kb$WEIGHTED_FST),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians_pre,c(0.005,0.995))
+quantile(bstrap_means_pre,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians_pre,c(0.025,0.975))
+quantile(bstrap_means_pre,c(0.025,0.975))
+
+#***************************************#post
+mean_FST_post <- mean(post.std_int.10kb$WEIGHTED_FST)
+median_FST_post <- median(post.std_int.10kb$WEIGHTED_FST)
+bstrap_means_post <- c()
+bstrap_medians_post <- c()
+for (i in 1:100) { 
+ bstrap_medians_post <- c(bstrap_medians_post,median(sample(post.std_int.10kb$WEIGHTED_FST,size=length(post.std_int.10kb$WEIGHTED_FST),replace=TRUE)))
+ bstrap_means_post <- c(bstrap_means_post,mean(sample(post.std_int.10kb$WEIGHTED_FST,size=length(post.std_int.10kb$WEIGHTED_FST),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians_post,c(0.005,0.995))
+quantile(bstrap_means_post,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians_post,c(0.025,0.975))
+quantile(bstrap_means_post,c(0.025,0.975))
+```
+
+# bootstrap for trial
+```{r}
+
+fst_arm10kb <- subset(fst_arm10kb, CHROM=="SM_V7_1" | CHROM=="SM_V7_ZW" | CHROM=="SM_V7_3" |  CHROM=="SM_V7_4" | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_2")
+fst_arm10kb$JT <- seq.int(nrow(fst_arm10kb))
+
+mean_FST_arm <- mean(fst_arm10kb$WEIGHTED_FST)
+median_FST_arm <- median(fst_arm10kb$WEIGHTED_FST)
+bstrap_means_arm <- c()
+bstrap_medians_arm <- c()
+for (i in 1:100) { 
+ bstrap_medians_arm <- c(bstrap_medians_arm,median(sample(fst_arm10kb$WEIGHTED_FST,size=length(fst_arm10kb$WEIGHTED_FST),replace=TRUE)))
+ bstrap_means_arm <- c(bstrap_means_arm,mean(sample(fst_arm10kb$WEIGHTED_FST,size=length(fst_arm10kb$WEIGHTED_FST),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians_arm,c(0.005,0.995))
+quantile(bstrap_means_arm,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians_arm,c(0.025,0.975))
+quantile(bstrap_means_arm,c(0.025,0.975))
+
+```
+
+#bootstrap values for villages
+```{r }
+#assumes you have your data per window in a big vector called ALL_FST_VALUES
+kakeeka.kachanga <- read.table(file.choose(), header = TRUE)
+mean_kakeeka.kachanga <- mean(kakeeka.kachanga$WEIR_AND_COCKERHAM_FST, na.rm = TRUE)
+median_kakeeka.kachanga <- median(kakeeka.kachanga$WEIR_AND_COCKERHAM_FST, na.rm = TRUE)
+bstrap_means_kakeeka.kachanga <- c()
+bstrap_medians_kakeeka.kachanga <- c()
+for (i in 1:100) { 
+ bstrap_medians_kakeeka.kachanga <- c(bstrap_medians_kakeeka.kachanga, median(sample(kakeeka.kachanga$WEIR_AND_COCKERHAM_FST,size=length(kakeeka.kachanga$WEIR_AND_COCKERHAM_FST),replace=TRUE), na.rm = TRUE))
+ bstrap_means_kakeeka.kachanga <- c(bstrap_means_kakeeka.kachanga, mean(sample(kakeeka.kachanga$WEIR_AND_COCKERHAM_FST,size=length(kakeeka.kachanga$WEIR_AND_COCKERHAM_FST),replace=TRUE), na.rm = TRUE))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians_kakeeka.kachanga,c(0.005,0.995))
+quantile(bstrap_means_kakeeka.kachanga,c(0.005,0.995))
+```
+
+
+```{r }
+fst_islands.shoreline10kb_subset <- subset(fst_islands.shoreline10kb, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+fst_islands.inland10kb_subset <- subset(fst_islands.mainland10kb, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+fst_inland.shoreline10kb_subset <- subset(fst_inland.shoreline10kb, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+#windows vs number of snps#
+ggscatter(pre25kb, x = "N_VARIANTS", y = "WEIGHTED_FST", conf.int = TRUE, cor.coef = TRUE, cor.method = "pearson", xlab = "Number of variants", ylab = "Weir and Cockerham weighted Fst", add = "reg.line", palette = c("blue", "green"), color = "blue", ellipse.level = 0.95, main = "Pearson correlation between fst and Number of varinats per 10kb window") + theme(plot.title = element_text(hjust = 0.5))
+
+fst10kb_arm_subset_2 <- subset(fst10kb_arm_subset, N_VARIANTS>100)
+
+### ploting each xsome individually with position where the variation occurs
+ggplot(data = subset(fst, CHROM=="SM_V7_ZW"), aes(POS, WEIR_AND_COCKERHAM_FST)) + ggtitle("Fst for standard vs intensive trial arms, Chrom_ZW") + geom_point(na.rm = TRUE)
+
+#back to plots for all chromosome#
+xx <- pdata %>% filter(Treatment=="Intensive", Tp == 2)
+
+ggplot(data = pre.std_int.10kb , aes(1:nrow(pre.std_int.10kb), WEIGHTED_FST,col=CHROM)) + geom_point(na.rm = TRUE, size=0.3) + ggtitle("Genetic differentiation between standard vs intensive among pre-treatment populations") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("") + ylim(0,0.2) + xlab("Genomic windows (10kb)") + scale_color_discrete(name = "Chromosome")
+
+ggplot(data = post.std_int.10kb, aes(1:nrow(post.std_int.10kb), WEIGHTED_FST,col=CHROM)) + geom_point(na.rm = TRUE, size=0.3) + ggtitle("Genetic differentiation between standard vs intensive among post-treatment populations") + theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("") + ylim(0,0.2) + scale_color_discrete(name = "Chromosome")
+
+ggplot(data = post.std_int.10kb, aes(1:nrow(post.std_int.10kb), WEIGHTED_FST,col=CHROM)) + geom_rect(aes(xmin=9829,ymin=0.00,xmax=9844,ymax=0.20), fill="grey", color="grey") + geom_point(size=0.3) + ggtitle("Genetic differentiation between standard vs intensive among post-treatment populations") + theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("") 
+
+ggplot(data = post.std_int.10kb, aes(1:nrow(post.std_int.10kb), WEIGHTED_FST,col=CHROM)) + geom_rect(aes(xmin=31211,ymin=0.00,xmax=31300,ymax=0.20), fill="grey", color="grey") + geom_point(size=0.3) + ggtitle("Genetic differentiation between standard vs intensive among post-treatment populations") + theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("")
+
+xx <- post.std_int.10kb %>% filter(post.std_int.10kb$WEIGHTED_FST > 0.15) # quite useful
+
+#*******************************************************
+#Calculating bootstrap values.
+#*******************************************************
+
+post10kb$CHROM <- as.factor(post10kb$CHROM)
+
+post <- ggplot(post10kb, aes(CHROM, WEIGHTED_FST, col=CHROM))  + geom_violin(trim = F) + theme_bw() + ggpubr::rotate_x_text()  + ggtitle("Genetic differentiation between standard(n=23) vs intensive(n=29) arms among post-treatment parasite populations") +theme(legend.position="none")  + theme(plot.title = element_text(hjust = 0.5)) + xlab(" Chromosomes (Genomic windows 10kb)") + stat_summary(fun=median, geom="point", size=1, color="blue") + ylim(-0.05 ,0.2)
+
+pre <- ggplot(pre10kb, aes(CHROM, WEIGHTED_FST,col=CHROM)) + geom_violin(trim = F) + theme_bw() + ggpubr::rotate_x_text() + ggtitle("Genetic differentiation between standard(n=73) and intensive(n=49) arms among pre-treatment parasite populations") +theme(legend.position="none")  + theme(plot.title = element_text(hjust = 0.5)) + xlab("chromosomes (Genomic windows 10kb)")  + stat_summary(fun=median, geom="point", size=1, color="blue") + ylim(-0.05,0.2)
+
+ggplot(data = pre10kb , aes(1:nrow(pre10kb), WEIGHTED_FST,col=CHROM)) + geom_point(na.rm = TRUE, size=0.3) + ggtitle("Genetic differentiation between standard(n=72) and intensive(n=50) among pre-treatment populations") +theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("") + ylim(0,0.2) + xlab("Genomic windows (10kb)")
+
+
+ggplot(data = pre10kb , aes(1:nrow(pre10kb), WEIGHTED_FST,col=CHROM)) + geom_point(na.rm = TRUE, size=0.3) + ggtitle("Genetic differentiation between standard(n=72) and intensive(n=50) among pre-treatment populations") +theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("") + ylim(0,0.2) + xlab("Genomic windows (10kb)")
+
+ggplot(data = fst_islands.shoreline10kb_subset, aes(1:nrow(fst_islands.shoreline10kb_subset), WEIGHTED_FST,col=CHROM)) + geom_point(na.rm = TRUE, size=0.3) + ggtitle("Fst between islands and shoreline")+theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("Genomic windows (10kb)") + ylim(0,1)
+
+ggplot(data = fst_islands.inland10kb_subset, aes(1:nrow(fst_islands.inland10kb_subset), WEIGHTED_FST,col=CHROM)) + geom_point(na.rm = TRUE, size=0.3) + ggtitle("Fst between islands and inland")+theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("Genomic windows (10kb)") + ylim(0,1)
+
+ggplot(data = fst_inland.shoreline10kb_subset, aes(1:nrow(fst_inland.shoreline10kb_subset), WEIGHTED_FST,col=CHROM)) + geom_point(na.rm = TRUE, size=0.3) + ggtitle("Fst between inland and shoreline")+theme(legend.position="none") + theme_bw() + theme(plot.title = element_text(hjust = 0.5)) + xlab("Genomic windows (10kb)") + ylim(0,1)
+```
+
+plotting Tajima's D statistics
+```{r  }
+tajima50kb <- read.table(file.choose(), header = T)
+tajima10kb <- read.table(file.choose(), header = T)
+tajima25kb <- read.table(file.choose(), header = T)
+
+td50kb <- subset(tajima50kb,  CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" | CHROM=="SM_V7_4" | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+
+td10kb <- subset(tajima10kb, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" | CHROM=="SM_V7_4" | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+
+td25kb <- subset(tajima25kb, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" | CHROM=="SM_V7_4" | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+
+ggplot(data = td50kb, aes(1:nrow(td50kb), TajimaD,col=CHROM)) + geom_point(na.rm = TRUE, size=0.1) + theme(legend.position="none") + xlab("Genomic windows (50kb)") + theme_bw() + ggtitle("Genome-wide Tajima's D") + theme(plot.title = element_text(hjust = 0.5)) + labs(colour = "Chromosome")
+
+ggplot(data = tajima10kb_subset, aes(1:nrow(tajima10kb_subset), TajimaD,col=CHROM)) + geom_point(na.rm = TRUE, size=0.1) + theme(legend.position="none") + xlab("Genomic windows (10kb)") + theme_bw() + ggtitle("Genome-wide Tajima's D") + theme(plot.title = element_text(hjust = 0.5)) + labs(colour = "Chromosome")
+
+ggplot(data = td25kb, aes(1:nrow(tajima25kb_subset), TajimaD,col=CHROM)) + geom_point(na.rm = TRUE, size=0.1) + theme(legend.position="none") + xlab("Genomic windows (25kb)") + theme_bw() + ggtitle("Genome-wide Tajima's D") + theme(plot.title = element_text(hjust = 0.5)) + labs(colour = "Chromosome")
+
+tajima25kb_subset$JV <- seq.int(nrow(tajima25kb_subset))
+
+ggplot(data = tajima25kb_subset, aes(JV, TajimaD,col=CHROM)) + theme(legend.position="none") + xlab("Genomic windows (25kb)") + theme_bw() + ggtitle("Genome-wide Tajima's D") + theme(plot.title = element_text(hjust = 0.5)) + labs(colour = "Chromosome") + geom_rect(aes(xmin=10774,ymin=-5,xmax=10852,ymax=5), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1) + geom_hline(aes(yintercept = -2), linetype = "dashed", colour = "grey")+ geom_hline(aes(yintercept = 2), linetype = "dashed", colour = "grey")
+
+cutoff.tajima <- subset(tajima25kb_subset, TajimaD< -2.0)
+
+XPEHH_cutoff_std.int <- subset(XPEHH_std.int_2, mean>2.0)
+
+#xmin=2590 >> 40550000 (40.55 Mb)
+#xmax=2650 >> 43550000 (43.55 Mb)
+
+#Ploting region of interest on chr2#
+tajima_50kb_Chr2 <- subset(tajima_50kb_, CHROM=="SM_V7_2")
+
+ggplot(data = tajima_50kb_Chr2, aes(1:nrow(tajima_50kb_Chr2), TajimaD,col=CHROM)) + geom_point(na.rm = TRUE, size=0.1) + ggtitle("TajimaD for Chromosome two") + theme(legend.position="none") + xlab("Chr2_Genomic windows (50kb)")
+
+ggplot(data = tajima_50kb_Chr2, aes(BIN_START, TajimaD,col=CHROM)) + theme(legend.position="CHROM") + geom_rect(aes(xmin=41000000,ymin=-5,xmax=43400000,ymax=4), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1, color= "#B97908") + xlab("Chr2_Genomic windows (50kb)") + theme_bw() + ggtitle("Tajima's D for Chr2_region of interest") + theme(plot.title = element_text(hjust = 0.5))
+
+#*** rgb(185,121,8, maxColorValue = 255)#
+```
+
+#plotting fst among individual villages#
+```{r }
+setwd("/Users/jt24/Desktop/PopGen_paper/Fst")
+fst_villages <- read.csv(file.choose())
+fst_villages <- read.csv("fst4.csv", header=T, stringsAsFactors=FALSE, fileEncoding="latin1")
+
+#plotting fst for villages with distance between the villages#
+scaleFactor <- max(fst_villages$fst) / max(fst_villages$linear_distance_km)
+
+ggplot(data = fst_villages, aes(x = reorder(Villages, fst), y=fst)) + geom_col(aes(fill=location)) + theme_bw() + ggpubr::rotate_x_text() + geom_line(aes(x=Villages, y=linear_distance_km * scaleFactor, group=1)) + scale_y_continuous(name="Weir and Cockerham weighted Fst", sec.axis=sec_axis(~./scaleFactor, name="Linear distance (km)")) + xlab("Villages ordered by fst")
+
+ggplot(data = fst_villages, aes(x = reorder(Villages, fst), y=fst)) + geom_col(aes(fill=location)) + theme_bw() + ggpubr::rotate_x_text() + geom_line(aes(x=Villages, y=linear_distance_km * scaleFactor, group=1)) + scale_y_continuous(name="Weir and Cockerham weighted Fst", sec.axis=sec_axis(~./scaleFactor, name="Linear distance (km)")) + xlab("Villages ordered by fst")
+
+#adding a smoothes line to the upper line plot over the fst plots#
+ggplot(data = fst_villages, aes(x = reorder(Villages, fst), y=fst)) + geom_col(aes(fill=location)) + theme_bw() + ggpubr::rotate_x_text() + geom_smooth(aes(x=Villages, y=linear_distance_km * scaleFactor, group=1)) + scale_y_continuous(name="Weir and Cockerham weighted Fst", sec.axis=sec_axis(~./scaleFactor, name="Linear distance (km)")) + xlab("Villages ordered by fst")
+
+#computing correlation between distance and fst#
+ggscatter(fst_villages, x = "linear_distance_km", y = "fst", conf.int = TRUE, cor.coef = TRUE, cor.method = "pearson", xlab = "Linear distance between villages (km)", ylab = "Weir and Cockerham weighted Fst", add = "reg.line", palette = c("blue", "green"), color = "blue", ellipse.level = 0.95, main = "Pearson correlation between fst and linear distance between villages") + theme(plot.title = element_text(hjust = 0.5))
+
+#ordering by distance#
+ggplot(data = fst_villages, aes(x = reorder(Villages, linear_distance_km), y=fst)) + geom_col(aes(fill=location)) + theme_bw() + ggpubr::rotate_x_text() + geom_line(aes(x=Villages, y=linear_distance_km * scaleFactor, group=1)) + scale_y_continuous(name="Weir and Cockerham weighted Fst", sec.axis=sec_axis(~./scaleFactor, name="Linear distance (km)")) + xlab("Villages ordered by linear distance")
+
+ggcorr(fst_villages)
+
+fst_villages$linear_distance_km <- as.factor(fst_villages$linear_distance_km)
+ggplot(fst_villages, aes(x=linear_distance_km, y=fst))  + geom_violin(trim = F) + ggpubr::rotate_x_text()
+```
+
+```{r }
+pdata <- read.csv(file.choose(), header = T)
+
+ggplot(data = pdata,aes(x = reorder(Sanger_Sample_ID, -genome.coverage),y =  genome.coverage)) + ggpubr::rotate_x_text() + geom_bar(stat = "identity") +ggtitle("Genome coverage per sample") + xlab("Samples") + ylab("Genome coverage per sample") + geom_hline(yintercept = mean(pdata$genome.coverage), color="blue")
+
+ggplot(data = pdata,aes(x = reorder(Sanger_Sample_ID, -genome.coverage),y =  genome.coverage), face="bold") + geom_bar(stat = "identity") + xlab("Samples") + ylab("Genome coverage per sample") + geom_hline(yintercept = mean(pdata$genome.coverage), color="blue") + theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+```
+
+```{r  }
+map <- read.table(file.choose(), header = FALSE)
+
+map_chrz <- subset(map, V1=="SM_V7_1_1" | V1=="SM_V7_2_4" | V1=="SM_V7_3_3" | V1=="SM_V7_4_5" | V1=="SM_V7_5_6" | V1=="SM_V7_6_7" | V1=="SM_V7_7_8" | V1=="SM_V7_ZW_2")
+
+map_chr1 <- subset(map_chrz, V1=="SM_V7_1_1")
+map_chr2 <- subset(map_chrz, V1=="SM_V7_2_4")
+map_chr3 <- subset(map_chrz, V1=="SM_V7_3_3")
+map_chr4 <- subset(map_chrz, V1=="SM_V7_4_5")
+map_chr5 <- subset(map_chrz, V1=="SM_V7_5_6")
+map_chr6 <- subset(map_chrz, V1=="SM_V7_6_7")
+map_chr7 <- subset(map_chrz, V1=="SM_V7_7_8")
+map_chrzw <- subset(map_chrz, V1=="SM_V7_ZW_2")
+
+write.csv(map_chr1, file = "map_chr1.csv")
+write.csv(map_chr2, file = "map_chr2.csv")
+write.csv(map_chr3, file = "map_chr3.csv")
+write.csv(map_chr4, file = "map_chr4.csv")
+write.csv(map_chr5, file = "map_chr5.csv")
+write.csv(map_chr6, file = "map_chr6.csv")
+write.csv(map_chr7, file = "map_chr7.csv")
+write.csv(map_chrzw, file = "map_chrzw.csv")
+```
+
+Making a genetic map for chromosomes
+```{r  }
+map_chr1 <- read.delim(file.choose(), header = FALSE)
+Chr1_map <- subset(map_chr1, select = c(1,3,2))
+Chr1_map[, 3 -(23979)]
+Chr1_map$cm <- c(Chr1_map[,3]-23979)* 3.50881/1000000
+Chr1_mp <- subset(Chr1_map, select = c(1,2,4,3))
+write.table(Chr1_mp, file = "Chr1_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+map_chr2 <- read.delim(file.choose(), header = T)
+map_chr2$cm <- c(map_chr2[,2]-5047 )* 4.97524/1000000
+Chr2_mp <- subset(map_chr2, select = c(1,3,4,2))
+write.table(Chr2_mp, file = "Chr2_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+map_chr3 <- read.table(file.choose(), header = TRUE)
+map_chr3$cm <- c(map_chr3[,2]-19752 )* 3.23627/1000000
+Chr3_mp <- subset(map_chr3, select = c(1,3,4,2))
+write.table(Chr3_mp, file = "Chr3_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+map_chr4 <- read.delim(file.choose(), header = TRUE)
+map_chr4$cm <- c(map_chr4[,2]-820)* 4.10342/1000000
+Chr4_mp <- subset(map_chr4, select = c(1,3,4,2))
+write.table(Chr4_mp, file = "Chr4_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+map_chr5 <- read.delim(file.choose(), header = TRUE)
+map_chr5$cm <- c(map_chr5[,2]-6547)* 3.90968/1000000
+Chr5_mp <- subset(map_chr5, select = c(1,3,4,2))
+write.table(Chr5_mp, file = "Chr5_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+map_chr6 <- read.delim(file.choose(), header = TRUE)
+map_chr6$cm <- c(map_chr6[,2]-50890)* 4.62264/1000000
+Chr6_mp <- subset(map_chr6, select = c(1,3,4,2))
+write.table(Chr6_mp, file = "Chr6_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+map_chr7 <- read.delim(file.choose(), header = TRUE)
+map_chr7$cm <- c(map_chr7[,2]-2518)* 5.97870/1000000
+Chr7_mp <- subset(map_chr7, select = c(1,3,4,2))
+write.table(Chr7_mp, file = "Chr7_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+
+map_chrZW <- read.delim(file.choose(), header = TRUE)
+map_chrZW$cm <- c(map_chrZW[,2]-1395)* 4.03130/1000000
+ChrZW_mp <- subset(map_chrZW, select = c(1,3,4,2))
+write.table(ChrZW_mp, file = "ChrZW_mp.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+```
+
+#Annotation of iHS data tables*Standard#
+```{r }
+Chr1_std <- read.table(file.choose(), header = T)
+Chr1_std$CHROM <- c("chr1")
+
+Chr2_std <- read.table(file.choose(), header = T)
+Chr2_std$CHROM <- c("chr2")
+
+Chr3_std <- read.table(file.choose(), header = T)
+Chr3_std$CHROM <- c("chr3")
+
+Chr4_std <- read.table(file.choose(), header = T)
+Chr4_std$CHROM <- c("chr4")
+
+Chr5_std <- read.table(file.choose(), header = T)
+Chr5_std$CHROM <- c("chr5")
+
+Chr6_std <- read.table(file.choose(), header = T)
+Chr6_std$CHROM <- c("chr6")
+
+Chr7_std <- read.table(file.choose(), header = T)
+Chr7_std$CHROM <- c("chr7")
+
+Chrzw_std <- read.table(file.choose(), header = T)
+Chrzw_std$CHROM <- c("chrZW")
+```
+
+#Annotation of iHS data tables*Intensive#
+```{r  }
+Chr1_int <- read.table(file.choose(), header = T)
+Chr1_int$CHROM <- c("chr1")
+
+Chr2_int <- read.table(file.choose(), header = T)
+Chr2_int$CHROM <- c("chr2")
+
+Chr3_int <- read.table(file.choose(), header = T)
+Chr3_int$CHROM <- c("chr3")
+
+Chr4_int <- read.table(file.choose(), header = T)
+Chr4_int$CHROM <- c("chr4")
+
+Chr5_int <- read.table(file.choose(), header = T)
+Chr5_int$CHROM <- c("chr5")
+
+Chr6_int <- read.table(file.choose(), header = T)
+Chr6_int$CHROM <- c("chr6")
+
+Chr7_int <- read.table(file.choose(), header = T)
+Chr7_int$CHROM <- c("chr7")
+
+Chrzw_int <- read.table(file.choose(), header = T)
+Chrzw_int$CHROM <- c("chrZW")
+#*************************************#
+Chr1_int$start <- Chr1_int$Pos
+Chr1_int$end <- Chr1_int$start
+
+Chr2_int$start <- Chr2_int$Pos
+Chr2_int$end <- Chr2_int$start
+
+Chr3_int$start <- Chr3_int$Pos
+Chr3_int$end <- Chr3_int$start
+
+Chr4_int$start <- Chr4_int$Pos
+Chr4_int$end <- Chr4_int$start
+
+Chr5_int$start <- Chr5_int$Pos
+Chr5_int$end <- Chr5_int$start
+
+Chr6_int$start <- Chr6_int$Pos
+Chr6_int$end <- Chr6_int$start
+
+Chr7_int$start <- Chr7_int$Pos
+Chr7_int$end <- Chr7_int$start
+
+Chrzw_int$start <- Chrzw_int$Pos
+Chrzw_int$end <- Chrzw_int$start
+```
+
+#adding a column "chr*" to respective files* ihs tp1#
+```{R  }
+Chr1_tp1 <- read.table(file.choose(), header = T)
+Chr1_tp1$CHROM <- c("chr1")
+
+Chr2_tp1 <- read.table(file.choose(), header = T)
+Chr2_tp1$CHROM <- c("chr2")
+
+Chr3_tp1 <- read.table(file.choose(), header = T)
+Chr3_tp1$CHROM <- c("chr3")
+
+Chr4_tp1 <- read.table(file.choose(), header = T)
+Chr4_tp1$CHROM <- c("chr4")
+
+Chr5_tp1 <- read.table(file.choose(), header = T)
+Chr5_tp1$CHROM <- c("chr5")
+
+Chr6_tp1 <- read.table(file.choose(), header = T)
+Chr6_tp1$CHROM <- c("chr6")
+
+Chr7_tp1 <- read.table(file.choose(), header = T)
+Chr7_tp1$CHROM <- c("chr7")
+
+Chrzw_tp1 <- read.table(file.choose(), header = T)
+Chrzw_tp1$CHROM <- c("chrZW")
+#*************************************#
+Chr1_tp1$start <- Chr1_tp1$Pos
+Chr1_tp1$end <- Chr1_tp1$start
+
+Chr2_tp1$start <- Chr2_tp1$Pos
+Chr2_tp1$end <- Chr2_tp1$start
+
+Chr3_tp1$start <- Chr3_tp1$Pos
+Chr3_tp1$end <- Chr3_tp1$start
+
+Chr4_tp1$start <- Chr4_tp1$Pos
+Chr4_tp1$end <- Chr4_tp1$start
+
+Chr5_tp1$start <- Chr5_tp1$Pos
+Chr5_tp1$end <- Chr5_tp1$start
+
+Chr6_tp1$start <- Chr6_tp1$Pos
+Chr6_tp1$end <- Chr6_tp1$start
+
+Chr7_tp1$start <- Chr7_tp1$Pos
+Chr7_tp1$end <- Chr7_tp1$start
+
+Chrzw_tp1$start <- Chrzw_tp1$Pos
+Chrzw_tp1$end <- Chrzw_tp1$start
+```
+
+#iHS tp2#
+```{r  }
+Chr1_tp2 <- read.table(file.choose(), header = T)
+Chr1_tp2$CHROM <- c("chr1")
+
+Chr2_tp2 <- read.table(file.choose(), header = T)
+Chr2_tp2$CHROM <- c("chr2")
+
+Chr3_tp2 <- read.table(file.choose(), header = T)
+Chr3_tp2$CHROM <- c("chr3")
+
+Chr4_tp2 <- read.table(file.choose(), header = T)
+Chr4_tp2$CHROM <- c("chr4")
+
+Chr5_tp2 <- read.table(file.choose(), header = T)
+Chr5_tp2$CHROM <- c("chr5")
+
+Chr6_tp2 <- read.table(file.choose(), header = T)
+Chr6_tp2$CHROM <- c("chr6")
+
+Chr7_tp2 <- read.table(file.choose(), header = T)
+Chr7_tp2$CHROM <- c("chr7")
+
+Chrzw_tp2 <- read.table(file.choose(), header = T)
+Chrzw_tp2$CHROM <- c("chrZW")
+#*******************************************#
+Chr1_tp2$start <- Chr1_tp2$Pos
+Chr1_tp2$end <- Chr1_tp2$start
+
+Chr2_tp2$start <- Chr2_tp2$Pos
+Chr2_tp2$end <- Chr2_tp2$start
+
+Chr3_tp2$start <- Chr3_tp2$Pos
+Chr3_tp2$end <- Chr3_tp2$start
+
+Chr4_tp2$start <- Chr4_tp2$Pos
+Chr4_tp2$end <- Chr4_tp2$start
+
+Chr5_tp2$start <- Chr5_tp2$Pos
+Chr5_tp2$end <- Chr5_tp2$start
+
+Chr6_tp2$start <- Chr6_tp2$Pos
+Chr6_tp2$end <- Chr6_tp2$start
+
+Chr7_tp2$start <- Chr7_tp2$Pos
+Chr7_tp2$end <- Chr7_tp2$start
+
+Chrzw_tp2$start <- Chrzw_tp2$Pos
+Chrzw_tp2$end <- Chrzw_tp2$start
+```
+
+#adding windows to iHS plots#
+```{r }
+Chr1_std$start <- Chr1_std$Pos
+Chr1_std$end <- Chr1_std$start
+
+Chr2_std$start <- Chr2_std$Pos
+Chr2_std$end <- Chr2_std$start
+
+Chr3_std$start <- Chr3_std$Pos
+Chr3_std$end <- Chr3_std$start
+
+Chr4_std$start <- Chr4_std$Pos
+Chr4_std$end <- Chr4_std$start
+
+Chr5_std$start <- Chr5_std$Pos
+Chr5_std$end <- Chr5_std$start
+
+Chr6_std$start <- Chr6_std$Pos
+Chr6_std$end <- Chr6_std$start
+
+Chr7_std$start <- Chr7_std$Pos
+Chr7_std$end <- Chr7_std$start
+
+Chrzw_std$start <- Chrzw_std$Pos
+Chrzw_std$end <- Chrzw_std$start
+```
+
+#Combining chromosomes for iHS *and plotting the results*#
+```{r}
+library(rehh)
+
+#iHS standard*Chr1_std, Chr2_std, Chr3_std, Chr4_std, Chr5_std, Chr6_std, Chr7_std, Chrzw_std#
+Std_iHS <- rbind(Chr1_std, Chr2_std, Chr3_std, Chr4_std, Chr5_std, Chr6_std, Chr7_std, Chrzw_std)
+
+bin <- 25000
+STD_iHS <- Std_iHS %>% mutate(window = start %/% bin) %>% group_by(window, CHROM) %>% summarise(mean = mean(norm)) %>% mutate(start = (window*bin)+1, stop = (window+1)*bin)
+
+STD_iHS_2 <- STD_iHS[order(STD_iHS$CHROM, STD_iHS$start),]
+STD_iHS_2$XX <- seq.int(nrow(STD_iHS_2))
+
+ggplot(data = STD_iHS_2, aes(XX, mean, color=as.factor(CHROM), group=CHROM)) + geom_point(size=0.1) + xlab("Genomic windows (25kb)") + ylab("iHS_standard") + theme_bw() + ylim(-4, 4) + scale_color_discrete(name = "Chromosome")
+
+#plotting genome-wide distribution#
+distribplot(STD_iHS_2$mean, xlab = "iHS_standard")
+
+#adding one or 2 y intercepts#
+ggplot(data = STD_iHS_2, aes(XX, mean, color=as.factor(CHROM), group=CHROM)) + geom_point(size=0.1) + xlab("Genomic windows (25kb)") + ylab("iHS_standard") + theme_bw() + ylim(-4, 4) + geom_hline(yintercept = -2) + geom_hline(yintercept = 2) + scale_color_discrete(name = "Chromosome")
+
+ggplot(data = STD_iHS_2, aes(XX, mean, color=CHROM, group=CHROM)) + geom_point(size=0.1) + xlab("Genomic windows (25kb)") + ylab("iHS_standard") + theme_bw() + ylim(-4, 4) + geom_hline(aes(yintercept = -2), linetype = "dashed", colour = "grey") + labs(colour = "Chromosome") + geom_hline(aes(yintercept = 2), linetype = "dashed", colour = "grey")
+
+ggplot(data = STD_iHS, aes(start, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Genomic windows (25kb)") + ylab("iHS_standard") + facet_grid(CHROM~.) + theme_bw()
+
+ggplot(data = STD_iHS, aes(start, mean)) + geom_point(size=0.1) + xlab("Binstart_25kb") + ylab("iHS_standard") + facet_grid(cols = vars(CHROM)) + theme_bw()
+
+ggplot(data = STD_iHS, aes(start, mean, color = as.factor(CHROM))) + geom_point(size=0.1) + xlab("Chromosomes") + ylab("iHS_standard") + scale_color_manual(values=c("red","blue","green","purple","orange","grey","yellow", "chocolate", "black","pink"))
+
+#iHS intensive* Chr1_int, Chr2_int, Chr3_int, Chr4_int, Chr5_int, Chr6_int, Chr7_int, Chrzw_int#
+Int_iHS <- rbind(Chr1_int, Chr2_int, Chr3_int, Chr4_int, Chr5_int, Chr6_int, Chr7_int, Chrzw_int)
+bin <- 25000
+INT_iHS <- Int_iHS %>% mutate(window = start %/% bin) %>% group_by(window, CHROM) %>% summarise(mean = mean(norm)) %>% mutate(start = (window*bin)+1, stop = (window+1)*bin)
+
+INT_iHS_2 <- INT_iHS[order(INT_iHS$CHROM, INT_iHS$start),] 
+
+INT_iHS_2$JV <- seq.int(nrow(INT_iHS_2))
+
+ggplot(data = INT_iHS_2, aes(JV, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Binstart_25kb") + ylab("iHS_intensive") + theme_bw() + geom_rect(aes(xmin=4700,ymin=-4,xmax=4720,ymax=4, size =0.3), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+ggplot(data = INT_iHS_2, aes(JV, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Binstart_25kb") + ylab("iHS_intensive") + theme_bw() + geom_rect(aes(xmin=4700,ymin=-4,xmax=4720,ymax=4, size =0.3), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+ggplot(data = INT_iHS_2, aes(JV, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Genomic windows (25kb)") + ylab("iHS_intensive") + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + ylim(-4, 4) + geom_hline(aes(yintercept = -2), linetype="dashed", colour="grey") + geom_hline(aes(yintercept = 2), linetype="dashed", colour="grey") + labs(colour = "Chromosome")
+
+ggplot(data = INT_iHS_2, aes(JV, mean, color=as.factor(CHROM), group=CHROM)) + geom_point(size=0.1) + xlab("Binstart_25kb") + ylab("iHS_intensive") + theme_bw() + ylim(-4, 4)
+
+distribplot(INT_iHS_2$mean, xlab = "iHS_intensive")
+
+#plotting ihs.std vs iHS.int and coloring by chrom#
+write.csv(STD_iHS_2, file = "std_ihs.csv")
+write.csv(INT_iHS_2, file = "int_ihs.csv")
+
+std.int_ihs <- read.csv(file.choose())
+
+ggplot(data = na.omit(std.int_ihs), aes(x = mean_std, y = mean_int, color=as.factor(CHROM_int))) + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + xlab('iHS_satndard') + ylab('iHS_intensive') + ggtitle("iHS_standard vs iHS_intensive and coloring by chromosome") + theme(plot.title = element_text(hjust = 0.5))
+
+#iHS tp1 * Chr1_tp1, Chr2_tp1, Chr3_tp1, Chr4_tp1, Chr5_tp1, Chr6_tp1, Chr7_tp1, Chrzw_tp1#
+TP1_iHS <- rbind(Chr1_tp1, Chr2_tp1, Chr3_tp1, Chr4_tp1, Chr5_tp1, Chr6_tp1, Chr7_tp1, Chrzw_tp1)
+bin <- 25000
+TP1_iHS <- TP1_iHS %>% mutate(window = start %/% bin) %>% group_by(window, CHROM) %>% summarise(mean = mean(norm)) %>% mutate(start = (window*bin)+1, stop = (window+1)*bin)
+
+TP1_iHS_2 <- TP1_iHS[order(TP1_iHS$CHROM, TP1_iHS$start),]
+TP1_iHS_2$TJ <- seq.int(nrow(TP1_iHS_2))
+
+ggplot(data = TP1_iHS_2, aes(TJ, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Binstart_25kb") + ylab("iHS_pre-treatment") + theme_bw()  + geom_rect(aes(xmin=4700,ymin=-4,xmax=4720,ymax=4, size =0.3), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+distribplot(TP1_iHS_2$mean, xlab = "iHS_pre treatment")
+
+ggplot(data = TP1_iHS_2, aes(TJ, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Genomic windows (25kb)") + ylab("iHS_pre-treatment") + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + ylim(-4, 4) + geom_hline(yintercept = -2, color="grey", linetype="dashed") + geom_hline(yintercept = 2, color="grey", linetype="dashed") + labs(colour = "Chromosome")
+
+# iHS tp2* Chr1_tp2, Chr2_tp2, Chr3_tp2, Chr4_tp2, Chr5_tp2, Chr6_tp2, Chr7_tp2, Chrzw_tp2#
+TP2_iHS <- rbind(Chr1_tp2, Chr2_tp2, Chr3_tp2, Chr4_tp2, Chr5_tp2, Chr6_tp2, Chr7_tp2, Chrzw_tp2)
+bin <- 25000
+TP2_iHS <- TP2_iHS %>% mutate(window = start %/% bin) %>% group_by(window, CHROM) %>% summarise(mean = mean(norm)) %>% mutate(start = (window*bin)+1, stop = (window+1)*bin)
+
+TP2_iHS_2 <- TP2_iHS[order(TP2_iHS$CHROM, TP2_iHS$start),]
+TP2_iHS_2$VJ <- seq.int(nrow(TP2_iHS_2))
+
+ggplot(data = TP2_iHS_2, aes(VJ, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Binstart_25kb") + ylab("iHS_post-treatment") + theme_bw() + geom_rect(aes(xmin=4700,ymin=-4,xmax=4720,ymax=4, size =0.3), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+distribplot(TP2_iHS_2$mean, xlab = "iHS_post treatment")
+
+ggplot(data = TP2_iHS_2, aes(VJ, mean, color=as.factor(CHROM))) + xlab("Genomic windows (25kb)") + ylab("iHS_post-treatment") + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + geom_hline(yintercept = -2, color="grey", linetype="dashed") + geom_hline(yintercept = 2, color="grey", linetype="dashed") + labs(colour = "Chromosome") + ylim(-4, 4)
+
+#picking region on chr2#
+TP2_iHS_2_Chr2 <- subset(TP2_iHS_2, CHROM=="chr2")
+
+ggplot(data = TP2_iHS_2_Chr2, aes(VJ, mean, color=as.factor(CHROM))) + xlab("Chr2_Binstart_25kb") + ylab("iHS_post-treatment") + theme_bw() + geom_rect(aes(xmin=4700,ymin=-4,xmax=4720,ymax=4, alpha=0.2, size = 0.5), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1, color = "#B97908")
+
+#plotting tp1 vs tp2 ihs & coloring by chromosome#
+write.csv(TP1_iHS_2, file = "ihs_tp1.csv")
+write.csv(TP2_iHS_2, file = "ihs_tp2.csv")
+
+iHS_tp1.tp2 <- read.csv(file.choose())
+
+ggplot(data = na.omit(iHS_tp1.tp2), aes(x = mean_tp1, y = mean_tp2, color=as.factor(CHROM_tp1))) + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + xlab('iHS_pre-treatment') + ylab('iHS_post-treatment') + ggtitle("iHS_pre vs iHS_post treatment, coloring by chromosome") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+#Reading-in xpehh#
+```{r }
+Chr1_Std.Int <- read.table(file.choose(), header = TRUE)
+Chr2_Std.int <- read.table(file.choose(), header = TRUE)
+Chr3_Std.int <- read.table(file.choose(), header = TRUE)
+Chr4_std.int <- read.table(file.choose(), header = TRUE)
+Chr5_std.int <- read.table(file.choose(), header = TRUE)
+Chr6_std.int <- read.table(file.choose(), header = TRUE)
+Chr7_std.int <- read.table(file.choose(), header = TRUE)
+Chrzw_std.int <- read.table(file.choose(), header = TRUE)
+```
+
+#Combining chromosomes for XP-EHH and plotting the results#
+```{r }
+#XP-EHH std_int#
+# Chr1_Std.Int, Chr2_Std.int, Chr3_Std.int, Chr4_std.int, Chr5_std.int, Chr6_std.int, Chr7_std.int, Chrzw_std.int#
+# adding a chr* column in the dataset
+
+Chr1_Std.Int$CHROM <- c("chr1")
+Chr2_Std.int$CHROM <- c("chr2")
+Chr3_Std.int$CHROM <- c("chr3")
+Chr4_std.int$CHROM <- c("chr4")
+Chr5_std.int$CHROM <- c("chr5")
+Chr6_std.int$CHROM <- c("chr6")
+Chr7_std.int$CHROM <- c("chr7")
+Chrzw_std.int$CHROM <- c("chrZW")
+
+Chr1_Std.Int$start <- Chr1_Std.Int$pos
+Chr1_Std.Int$end <- Chr1_Std.Int$start
+
+Chr2_Std.int$start <- Chr2_Std.int$pos
+Chr2_Std.int$end <- Chr2_Std.int$start
+
+Chr3_Std.int$start <- Chr3_Std.int$pos
+Chr3_Std.int$end <- Chr3_Std.int$start
+
+Chr4_std.int$start <- Chr4_std.int$pos
+Chr4_std.int$end <- Chr4_std.int$start
+
+Chr5_std.int$start <- Chr5_std.int$pos
+Chr5_std.int$end <- Chr5_std.int$start
+
+Chr6_std.int$start <- Chr6_std.int$pos
+Chr6_std.int$end <- Chr6_std.int$start
+
+Chr7_std.int$start <- Chr7_std.int$pos
+Chr7_std.int$end <- Chr7_std.int$start
+
+Chrzw_std.int$start <- Chrzw_std.int$pos
+Chrzw_std.int$end <- Chrzw_std.int$start
+
+XPEHH_std.int <- rbind(Chr1_Std.Int, Chr2_Std.int, Chr3_Std.int, Chr4_std.int, Chr5_std.int, Chr6_std.int, Chr7_std.int, Chrzw_std.int)
+
+bin <- 25000
+XPEHH_std.int <- XPEHH_std.int %>% mutate(window = start %/% bin) %>% group_by(window, CHROM) %>% summarise(mean = mean(normxpehh)) %>% mutate(start = (window*bin)+1, stop = (window+1)*bin)
+
+XPEHH_std.int_2 <- XPEHH_std.int[order(XPEHH_std.int$CHROM, XPEHH_std.int$start),]
+
+XPEHH_std.int_2$TV <- seq.int(nrow(XPEHH_std.int_2))
+
+subset(XPEHH_std.int_2, XPEHH_std.int_2$mean > 2) -> selected.std
+subset(XPEHH_std.int_2, XPEHH_std.int_2$mean < -2) -> selected.int
+subset(XPEHH_std.int_2, XPEHH_std.int_2$mean < -2 | XPEHH_std.int_2$mean > 2) -> selected_std.int
+
+ggplot(data = XPEHH_std.int_2, aes(TV, mean, color=as.factor(CHROM))) + geom_point(size=0.1) + xlab("Genomic windows (25kb)") + ylab("XPEHH_std.int") + theme_bw() + geom_rect(aes(xmin=12711,ymin=-5,xmax=12717,ymax=5), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1) + geom_hline(yintercept = -2, color="grey", linetype="dashed") + geom_hline(yintercept = 2, color="grey", linetype="dashed")
+
+ggplot(data = XPEHH_std.int_2, aes(TV, mean, color=as.factor(CHROM))) + xlab("") + ylab("XPEHH_std.int") + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + geom_hline(yintercept = -2, color="grey", linetype="dashed") + geom_hline(yintercept = 2, color="grey", linetype="dashed") + labs(colour = "Chromosome") + ylim(-5, 5)
+
+XPEHH_cutoff_std.int <- subset(XPEHH_std.int_2, mean>2.0)
+XPEHH_cutoff2_std.int <- subset(XPEHH_std.int_2, mean< -2.0)
+distribplot(XPEHH_std.int_2$mean, xlab = "XP-EHH_std.int")
+distribplot(XPEHH_tp1.tp2_2$mean, xlab = "XP-EHH_tp1.tp2")
+
+#picking chrZW#
+XPEHH_std.int_2_ChrZW <- subset(XPEHH_std.int_2, CHROM=="chrzw")
+
+ggplot(data = XPEHH_std.int_2_ChrZW, aes(TV, mean, color=as.factor(CHROM))) + xlab("ChrZW_Binstart_25kb") + ylab("XPEHH_std.int_chrZW") + theme_bw() + geom_rect(aes(xmin=12000,ymin=-4,xmax=12020,ymax=4), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+#picking all regions >2 cutoff#
+ggplot(data = XPEHH_std.int_2, aes(TV, mean, color=as.factor(CHROM))) + xlab("Genomic windows (25kb)") + ylab("XPEHH_std.int") + theme_bw() + geom_rect(aes(xmin=1070,ymin=-4,xmax=1081,ymax=4), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1) + geom_hline(yintercept = -2, color="purple") + geom_hline(yintercept = 2, color="purple") + labs(colour = "Chromosome")
+
+ggplot(data = XPEHH_std.int_2, aes(TV, mean, color=as.factor(CHROM))) + xlab("Genomic windows (25kb)") + ylab("XPEHH_std.int") + theme_bw() + geom_rect(aes(xmin=13208,ymin=-4,xmax=13213,ymax=4), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1) + geom_hline(yintercept = -2, color="grey", linetype="dashed") + geom_hline(yintercept = 2, color="grey", linetype="dashed") + labs(colour = "Chromosome")
+
+#XP-EHH pre and post treatment#
+#Chr1_tp1.tp2, Chr2_tp1.tp2, Chr3_tp1.tp2, Chr4_tp1.tp2, Chr5_tp1.tp2, Chr6_tp1.tp2, Chr7_tp1.tp2, Chrzw_tp1.tp2#
+#adding a chr* column in the dataset
+
+Chr1_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+Chr2_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+Chr3_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+Chr4_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+Chr5_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+Chr6_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+Chr7_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+Chrzw_tp1.tp2 <- read.table(file.choose(), header = TRUE)
+
+Chr1_tp1.tp2$CHROM <- c("chr1")
+Chr2_tp1.tp2$CHROM <- c("chr2")
+Chr3_tp1.tp2$CHROM <- c("chr3")
+Chr4_tp1.tp2$CHROM <- c("chr4")
+Chr5_tp1.tp2$CHROM <- c("chr5")
+Chr6_tp1.tp2$CHROM <- c("chr6")
+Chr7_tp1.tp2$CHROM <- c("chr7")
+Chrzw_tp1.tp2$CHROM <- c("chrZW")
+
+#adding windows to XPEHH plots#
+Chr1_tp1.tp2$start <- Chr1_tp1.tp2$pos
+Chr1_tp1.tp2$end <- Chr1_tp1.tp2$start
+
+Chr2_tp1.tp2$start <- Chr2_tp1.tp2$pos
+Chr2_tp1.tp2$end <- Chr2_tp1.tp2$start
+
+Chr3_tp1.tp2$start <- Chr3_tp1.tp2$pos
+Chr3_tp1.tp2$end <- Chr3_tp1.tp2$start
+
+Chr4_tp1.tp2$start <- Chr4_tp1.tp2$pos
+Chr4_tp1.tp2$end <- Chr4_tp1.tp2$start
+
+Chr5_tp1.tp2$start <- Chr5_tp1.tp2$pos
+Chr5_tp1.tp2$end <- Chr5_tp1.tp2$start
+
+Chr6_tp1.tp2$start <- Chr6_tp1.tp2$pos
+Chr6_tp1.tp2$end <- Chr6_tp1.tp2$start
+
+Chr7_tp1.tp2$start <- Chr7_tp1.tp2$pos
+Chr7_tp1.tp2$end <- Chr7_tp1.tp2$start
+
+Chrzw_tp1.tp2$start <- Chrzw_tp1.tp2$pos
+Chrzw_tp1.tp2$end <- Chrzw_tp1.tp2$start
+
+XPEHH_tp1.tp2 <- rbind(Chr1_tp1.tp2, Chr2_tp1.tp2, Chr3_tp1.tp2, Chr4_tp1.tp2, Chr5_tp1.tp2, Chr6_tp1.tp2, Chr7_tp1.tp2, Chrzw_tp1.tp2)
+
+bin <- 25000
+XPEHH_tp1.tp2 <- XPEHH_tp1.tp2 %>% mutate(window = start %/% bin) %>% group_by(window, CHROM) %>% summarise(mean = mean(normxpehh)) %>% mutate(start = (window*bin)+1, stop = (window+1)*bin)
+
+XPEHH_tp1.tp2_2 <- XPEHH_tp1.tp2[order(XPEHH_tp1.tp2$CHROM, XPEHH_tp1.tp2$start),]
+XPEHH_tp1.tp2_2$JT <- seq.int(nrow(XPEHH_tp1.tp2_2))
+
+subset(XPEHH_tp1.tp2_2, XPEHH_tp1.tp2_2$mean < -2 | XPEHH_tp1.tp2_2$mean > 2) -> selected_tp1.tp2
+XPEHH_cutoff1_tp1.tp2 <- subset(XPEHH_tp1.tp2_2, mean>2.0)
+XPEHH_cutoff2_tp1.tp2 <- subset(XPEHH_tp1.tp2_2, mean< -2.0)
+
+ggplot(data = XPEHH_tp1.tp2_2, aes(JT, mean, color=as.factor(CHROM))) + xlab("Binstart_25kb") + ylab("XPEHH_tp1.tp2") + theme_bw() + geom_rect(aes(xmin=4700,ymin=-5,xmax=4720,ymax=5), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+ggplot(data = XPEHH_tp1.tp2_2, aes(JT, mean, color=as.factor(CHROM))) + xlab("Binstart_25kb") + ylab("XPEHH_tp1.tp2") + theme_bw() + geom_rect(aes(xmin=12000,ymin=-6,xmax=12060,ymax=6, size =0.3), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+ggplot(data = XPEHH_tp1.tp2_2, aes(JT, mean, color=as.factor(CHROM))) + xlab("Genomic windows (25kb)") + ylab("XPEHH_tp1.tp2") + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + ylim(-5, 5) + geom_hline(yintercept = 2, color="grey", linetype="dashed") + geom_hline(yintercept = -2, color="grey", linetype="dashed") + labs(colour = "Chromosome")
+
+ggplot(data = XPEHH_tp1.tp2_2, aes(JT, mean, color=as.factor(CHROM))) + xlab("Genomic windows (25kb)") + ylab("XPEHH_tp1.tp2") + theme_bw() + geom_hline(yintercept = 2, color="grey", linetype="dashed") + geom_hline(yintercept = -2, color="grey", linetype="dashed") + labs(colour = "Chromosome") + geom_rect(aes(xmin=15023,ymin=-5,xmax=15026,ymax=5), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+```
+
+#xpehh for down-sampled
+```{r }
+
+c1.t2_std.int <- read.table(file.choose(), header = TRUE)
+c2.t2_std.int <- read.table(file.choose(), header = TRUE)
+c3.t2_std.int <- read.table(file.choose(), header = TRUE)
+c4.t2_std.int <- read.table(file.choose(), header = TRUE)
+c5.t2_std.int <- read.table(file.choose(), header = TRUE)
+c6.t2_std.int <- read.table(file.choose(), header = TRUE)
+c7.t2_std.int <- read.table(file.choose(), header = TRUE)
+czw.t2_std.int <- read.table(file.choose(), header = TRUE)
+
+c1.t2_std.int$CHROM <- c("chr1")
+c2.t2_std.int$CHROM <- c("chr2")
+c3.t2_std.int$CHROM <- c("chr3")
+c4.t2_std.int$CHROM <- c("chr4")
+c5.t2_std.int$CHROM <- c("chr5")
+c6.t2_std.int$CHROM <- c("chr6")
+c7.t2_std.int$CHROM <- c("chr7")
+czw.t2_std.int$CHROM <- c("chrZW")
+
+c1.t2_std.int$start <- c1.t2_std.int$pos
+c1.t2_std.int$end <- c1.t2_std.int$start
+
+c2.t2_std.int$start <- c2.t2_std.int$pos
+c2.t2_std.int$end <- c2.t2_std.int$start
+
+c3.t2_std.int$start <- c3.t2_std.int$pos
+c3.t2_std.int$end <- c3.t2_std.int$start
+
+c4.t2_std.int$start <- c4.t2_std.int$pos
+c4.t2_std.int$end <- c4.t2_std.int$start
+
+c5.t2_std.int$start <- c5.t2_std.int$pos
+c5.t2_std.int$end <- c5.t2_std.int$start
+
+c6.t2_std.int$start <- c6.t2_std.int$pos
+c6.t2_std.int$end <- c6.t2_std.int$start
+
+c7.t2_std.int$start <- c7.t2_std.int$pos
+c7.t2_std.int$end <- c7.t2_std.int$start
+
+czw.t2_std.int$start <- czw.t2_std.int$pos
+czw.t2_std.int$end <- czw.t2_std.int$start
+
+xpehh.t2_std.int <- rbind(c1.t2_std.int, c2.t2_std.int, c3.t2_std.int, c4.t2_std.int, c5.t2_std.int, c6.t2_std.int, c7.t2_std.int, czw.t2_std.int)
+
+bin <- 25000
+Xpehh.t2_std.int <- xpehh.t2_std.int %>% mutate(window = start %/% bin) %>% group_by(window, CHROM) %>% summarise(mean = mean(normxpehh)) %>% mutate(start = (window*bin)+1, stop = (window+1)*bin)
+
+Xpehh.t2_std.int <- Xpehh.t2_std.int[order(Xpehh.t2_std.int$CHROM, Xpehh.t2_std.int$start),]
+Xpehh.t2_std.int$jv <- seq.int(nrow(Xpehh.t2_std.int))
+
+subset(Xpehh.t2_std.int, Xpehh.t2_std.int$mean < -2 | Xpehh.t2_std.int$mean > 2) -> crit.t2_std.int
+
+ggplot(data = Xpehh.t2_std.int, aes(jv, mean, color=as.factor(CHROM))) + xlab("Genomic windows (25kb)") + ylab("XP-EHH.t2_std.int") + theme_bw() + geom_point(na.rm = TRUE, size=0.1) + ylim(-5, 5) + geom_hline(yintercept = 2, color="grey", linetype="dashed") + geom_hline(yintercept = -2, color="grey", linetype="dashed") + labs(colour = "Chromosome") + ggtitle("XP-EHH for down-sampled post-treatment_std.int") + geom_rect(aes(xmin=10149,ymin=-5,xmax=10176,ymax=5), fill="grey", color="grey") + geom_point(na.rm = TRUE, size=0.1)
+
+```
+
+#Plotting nucleotide diversity#
+```{r   }
+nd_std <- read.delim(file.choose())
+nd_int <- read.delim(file.choose())
+nd_pre <- read.delim(file.choose())
+nd_post <- read.delim(file.choose())
+pre.std <- read.delim(file.choose())
+pre.int <- read.delim(file.choose())
+post.std <- read.delim(file.choose())
+post.int <- read.delim(file.choose())
+
+pre51 <- read.delim(file.choose())
+post51 <- read.delim(file.choose())
+pre_std51 <- read.delim(file.choose())
+pre_int51 <- read.delim(file.choose())
+post_std51 <- read.delim(file.choose())
+post_int51 <- read.delim(file.choose())
+
+#*******************************************************#pre51
+mean_pi <- mean(pre51$PI)
+median_pi <- median(pre51$PI)
+bstrap_means <- c()
+bstrap_medians <- c()
+for (i in 1:100) { 
+ bstrap_medians <- c(bstrap_medians,median(sample(pre51$PI,size=length(pre51$PI),replace=TRUE)))
+ bstrap_means <- c(bstrap_means,mean(sample(pre51$PI,size=length(pre51$PI),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians,c(0.005,0.995))
+quantile(bstrap_means,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians,c(0.025,0.975))
+quantile(bstrap_means,c(0.025,0.975))
+#*************************************************************#post51
+mean_pi <- mean(post51$PI)
+median_pi <- median(post51$PI)
+bstrap_means <- c()
+bstrap_medians <- c()
+for (i in 1:100) { 
+ bstrap_medians <- c(bstrap_medians,median(sample(post51$PI,size=length(post51$PI),replace=TRUE)))
+ bstrap_means <- c(bstrap_means,mean(sample(post51$PI,size=length(post51$PI),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians,c(0.005,0.995))
+quantile(bstrap_means,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians,c(0.025,0.975))
+quantile(bstrap_means,c(0.025,0.975))
+#***************************************************************#pre_std51
+mean_pi <- mean(pre_std51$PI)
+median_pi <- median(pre_std51$PI)
+bstrap_means <- c()
+bstrap_medians <- c()
+for (i in 1:100) { 
+ bstrap_medians <- c(bstrap_medians,median(sample(pre_std51$PI,size=length(pre_std51$PI),replace=TRUE)))
+ bstrap_means <- c(bstrap_means,mean(sample(pre_std51$PI,size=length(pre_std51$PI),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians,c(0.005,0.995))
+quantile(bstrap_means,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians,c(0.025,0.975))
+quantile(bstrap_means,c(0.025,0.975))
+#********************************************************#pre_int51
+mean_pi <- mean(pre_int51$PI)
+median_pi <- median(pre_int51$PI)
+bstrap_means <- c()
+bstrap_medians <- c()
+for (i in 1:100) { 
+ bstrap_medians <- c(bstrap_medians,median(sample(pre_int51$PI,size=length(pre_int51$PI),replace=TRUE)))
+ bstrap_means <- c(bstrap_means,mean(sample(pre_int51$PI,size=length(pre_int51$PI),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians,c(0.005,0.995))
+quantile(bstrap_means,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians,c(0.025,0.975))
+quantile(bstrap_means,c(0.025,0.975))
+#****************************************************#post_std51
+mean_pi <- mean(post_std51$PI)
+median_pi <- median(post_std51$PI)
+bstrap_means <- c()
+bstrap_medians <- c()
+for (i in 1:100) { 
+ bstrap_medians <- c(bstrap_medians,median(sample(post_std51$PI,size=length(post_std51$PI),replace=TRUE)))
+ bstrap_means <- c(bstrap_means,mean(sample(post_std51$PI,size=length(post_std51$PI),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians,c(0.005,0.995))
+quantile(bstrap_means,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians,c(0.025,0.975))
+quantile(bstrap_means,c(0.025,0.975))
+#**********************************************************#post_int51
+mean_pi <- mean(post_int51$PI)
+median_pi <- median(post_int51$PI)
+bstrap_means <- c()
+bstrap_medians <- c()
+for (i in 1:100) { 
+ bstrap_medians <- c(bstrap_medians,median(sample(post_int51$PI,size=length(post_int51$PI),replace=TRUE)))
+ bstrap_means <- c(bstrap_means,mean(sample(post_int51$PI,size=length(post_int51$PI),replace=TRUE)))
+}
+#these are symmetric 99% bootstrap confidence intervals for your median and mean, respectively
+quantile(bstrap_medians,c(0.005,0.995))
+quantile(bstrap_means,c(0.005,0.995))
+#these are symmetric 95% bootstrap confidence intervals for your median and mean
+quantile(bstrap_medians,c(0.025,0.975))
+quantile(bstrap_means,c(0.025,0.975))
+#*************************************************************
+
+nd_std_nohap <- subset(nd_std, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+ggplot(data = nd_std_nohap, aes(1:nrow(nd_std_nohap), PI, color=as.factor(CHROM))) + geom_point(size=0.1) + theme_bw() + xlab("Position along the genome") + ylab("Nulceotide diversity (π)") + ggtitle("Nulceotide diversity for the standard arm") + theme(plot.title = element_text(hjust = 0.5))
+
+# int_nd#
+nd_int <- read.delim(file.choose())
+
+nd_int_nohap <- subset(nd_int, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+ggplot(data = nd_int_nohap, aes(1:nrow(nd_int_nohap), PI, color=as.factor(CHROM))) + geom_point(size=0.1) + theme_bw() + xlab("Position along the genome") + ylab("Nulceotide diversity (π)") + ggtitle("Nulceotide diversity for the intensive arm") + theme(plot.title = element_text(hjust = 0.5))
+
+mean(nd_int_nohap$PI)
+
+#pre_nd#
+nd_pre <- read.delim(file.choose())
+
+nd_pre_nohap <- subset(nd_pre, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+ggplot(data = nd_pre_nohap, aes(1:nrow(nd_pre_nohap), PI, color=as.factor(CHROM))) + geom_point(size=0.1) + theme_bw() + xlab("Position_binstart") + ylab("Nulceotide diversity (π)") + ggtitle("Nulceotide diversity for the pre-treatment arm") + theme(plot.title = element_text(hjust = 0.5))
+
+mean(nd_pre_nohap$PI)
+
+#post_nd#
+nd_post <- read.delim(file.choose())
+nd_post_nohap <- subset(nd_post, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+ggplot(data = nd_post_nohap, aes(1:nrow(nd_post_nohap), PI, color=as.factor(CHROM))) + geom_point(size=0.1) + theme_bw() + xlab("Position along the genome") + ylab("Nulceotide diversity (π)") + ggtitle("Nulceotide diversity for the post-treatment arm") + theme(plot.title = element_text(hjust = 0.5))
+
+mean(nd_post_nohap$PI)
+                    
+#koome_nd#
+nd_koome <- read.delim(file.choose())
+
+nd_koome_nohap <- subset(nd_koome, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+ggplot(data = nd_koome_nohap, aes(1:nrow(nd_koome_nohap), PI, color=as.factor(CHROM))) + geom_point(size=0.1) + theme_bw() + xlab("Position_binstart") + ylab("Nulceotide diversity (π)") + ggtitle("Nulceotide diversity for Koome island") + theme(plot.title = element_text(hjust = 0.5))
+
+mean(nd_koome_nohap$PI)
+
+#damba_nd#
+nd_damba <- read.delim(file.choose())
+
+nd_damba_nohap <- subset(nd_damba, CHROM=="SM_V7_4_5" | CHROM=="SM_V7_1_1" | CHROM=="SM_V7_2_4" | CHROM=="SM_V7_3_3" | CHROM=="SM_V7_5_6" | CHROM=="SM_V7_6_7" | CHROM=="SM_V7_7_8" | CHROM=="SM_V7_ZW_2")
+
+ggplot(data = nd_damba_nohap, aes(1:nrow(nd_damba_nohap), PI, color=as.factor(CHROM))) + geom_point(size=0.1) + theme_bw() + xlab("Position_binstart") + ylab("Nulceotide diversity (π)") + ggtitle("Nulceotide diversity for Damba island") + theme(plot.title = element_text(hjust = 0.5))
+
+mean(nd_damba_nohap$PI)
+
+# mean nucleotide diversity#
+mean_nd <- read.csv(file.choose())
+
+ggplot(data = mean_nd, aes(x=Group, y=Mean, group=1)) + theme_bw() + geom_point() + geom_line(color="purple") + ggtitle("Mean nulceotide diversity") + theme(plot.title = element_text(hjust = 0.5)) + xlab("") + ylab("Mean (π)") + ggpubr::rotate_x_text()
+
+ND <- read.csv(file.choose())
+boxplot(ND, na.rm=T)
+ND_2 <- (melt(ND))
+
+# *** use melt command from reshape2 to transform data from long to wide format and then plot it.
+ggplot(ND_2) + geom_violin(aes(x=variable, y=value))
+ggplot(ND_2) + geom_boxplot(aes(x=variable, y=value))
+ggplot(ND_2) + geom_boxplot(aes(x=variable, y=-log10(value)))
+
+#*** ND per site ***#
+ND_site_std <- read.delim(file.choose())
+ND_site_int <- read.delim(file.choose())
+ND_site_tp1 <- read.delim(file.choose())
+ND_site_tp2 <- read.delim(file.choose())
+ND_site_koome <- read.delim(file.choose())
+ND_site_damba <- read.delim(file.choose())
+
+ND_2 <-  ND_site_std$PI
+ND_2$Intensive <- ND_site_int$PI
+ND_2 <-  c(ND_site_std$PI)
+names(ND_2)[3] <- "Standard"
+ND_2$Standard <- ND_site_std$PI
+
+mean_2 <- read.csv(file.choose())
+
+ggplot(data = mean_2, aes(grp, mN)) + geom_point() + geom_boxplot() + theme_bw() + ylab("Mean π") + ggtitle("Mean genome-wide nucleotide diversity") + theme(plot.title = element_text(hjust = 0.5)) 
+
+#nucleotide diversity from all groups combined together#
+Nucleotide_all <- read.delim(file.choose(), header=FALSE)
+
+ND_all <- subset(Nucleotide_all, V1=="SM_V7_4_5" | V1=="SM_V7_1_1" | V1=="SM_V7_2_4" | V1=="SM_V7_3_3" | V1=="SM_V7_5_6" | V1=="SM_V7_6_7" | V1=="SM_V7_7_8" | V1=="SM_V7_ZW_2")
+
+colnames(ND_all)[colnames(ND_all)=="V1"] <- "CHROM"
+colnames(ND_all)[colnames(ND_all)=="V2"] <- "POS"
+colnames(ND_all)[colnames(ND_all)=="V3"] <- "pi"
+colnames(ND_all)[colnames(ND_all)=="V4"] <- "grp"
+
+ggplot(data = ND_all, aes(x=CHROM, y=pi, color=as.factor(CHROM))) + geom_point() + theme_bw() + geom_boxplot() + ylab("Nucleotide diversity (π)")
+
+ggplot(data = ND_all, aes(x=grp, y=pi, color=as.factor(grp))) + geom_point() + theme_bw() + geom_boxplot() + ylab("Nucleotide diversity (π)")
+
+ggplot(data = ND_all, aes(1:nrow(ND_all), pi, color=as.factor(grp))) + geom_point(size=0.1) + theme_bw() 
+ggplot(data = ND_all, aes(1:nrow(ND_all), V3, color=as.factor(V4))) + theme_bw() + geom_point()
+
+Zingoola.pi <- read.delim(file.choose(), header = T)
+Busi.pi <- read.delim(file.choose())
+Kakeeka.pi <- read.delim(file.choose())
+Kachanga.pi <- read.delim(file.choose())
+Katooke.pi <- read.delim(file.choose())
+Kisu.pi <- read.delim(file.choose())
+lugumba.pi <- read.delim(file.choose())
+Kitosi.pi <- read.delim(file.choose())
+
+Zgoola.pi <- subset(Zingoola.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+Bsi.pi <- subset(Busi.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+Keeka.pi <- subset(Kakeeka.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+Kchanga.pi <- subset(Kachanga.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+Ktooke.pi <- subset(Katooke.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+Ksu.pi <- subset(Kisu.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+Lgumba.pi <- subset(lugumba.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+Ktosi.pi <- subset(Kitosi.pi, CHROM=="SM_V7_1" | CHROM=="SM_V7_2" | CHROM=="SM_V7_3" |CHROM=="SM_V7_4" 
+                    | CHROM=="SM_V7_5" | CHROM=="SM_V7_6" | CHROM=="SM_V7_7" | CHROM=="SM_V7_ZW")
+      
+ndVillages <- read.delim(file.choose())
+ggplot(ndVillages, aes(Village, PI, color = as.factor(Island))) +theme_bw() + geom_boxplot() + scale_color_discrete(name = "Island") +ggtitle("Per village average nucleotide diversity")
+
+nd1 <- Zgoola.pi %>% select(matches("PI"))
+colnames(nd1) <- "Zingoola"
+
+nd2 <- Bsi.pi %>% select(matches("PI"))
+colnames(nd2) <- "Busi"
+
+nd3 <- Keeka.pi %>% select(matches("PI"))
+colnames(nd3) <- "Kakeeka"
+
+nd4 <- Kchanga.pi %>% select(matches("PI"))
+colnames(nd4) <- "Kachanga"
+
+nd5 <- Ktooke.pi %>% select(matches("PI"))
+colnames(nd5) <- "Katooke"
+
+nd6 <- Ksu.pi %>% select(matches("PI"))
+colnames(nd6) <- "Kisu"
+
+nd7 <- Lgumba.pi %>% select(matches("PI"))
+colnames(nd7) <- "Lugumba"
+
+nd8 <- Ktosi.pi %>% select(matches("PI"))
+colnames(nd8) <- "Kitosi"
+
+set.seed(1)
+cbindPad <- function(...){
+args <- list(...)
+n <- sapply(args,nrow)
+mx <- max(n)
+pad <- function(x, mx){
+    if (nrow(x) < mx){
+        nms <- colnames(x)
+        padTemp <- matrix(NA, mx - nrow(x), ncol(x))
+        colnames(padTemp) <- nms
+        if (ncol(x)==0) {
+          return(padTemp)
+        } else {
+        return(rbind(x,padTemp))
+          }
+    }
+    else{
+        return(x)
+    }
+}
+rs <- lapply(args,pad,mx)
+return(do.call(cbind,rs))
+}
+
+Vnd <- cbindPad(nd1, nd2, nd3, nd4, nd5, nd6, nd7, nd8)
+```
+
+```{r }
+cutoff <- XPEHH_std.int_2 %>% summarize(lower = quantile(XPEHH_std.int_2$mean, probs = 0.005), upper = quantile(XPEHH_std.int_2$mean, probs = 0.997))
+
+ggplot(XPEHH_std.int_2, aes(x = XPEHH_std.int_2$mean)) + geom_density() + geom_vline(data = cutoff, aes(xintercept = lower)) + geom_vline(data = cutoff, aes(xintercept = upper)) + theme_bw()
+```
+```{r }
+#Fixing the metadata# #tsv file exported from Google sheets on 19/8/2020
+data <- read.csv(file.choose())
+
+#do name and number match up?
+table(data$Village.name..Vname.,data$Village.number..Vno.)
+
+#all in same country and district
+unique(data$Country)
+unique(data$District)
+
+#each village has a single treatment group
+table(data$Village.name..Vname.,data$Treatment)
+
+#is each village on a single island
+table(data$Island,data$Village.name..Vname.)
+
+#all sample ID and sanger sample ID are unique
+length(unique(data$SampleID))
+length(unique(data$Sanger_Sample_ID))
+
+#96 possible infrapop IDs - but that is ok.
+#length(unique(data$Infrapop_ID))
+
+#timespan
+time.between <- function(x) {
+max(dmy(x)) - min(dmy(x))}
+
+#distribution of sampling dates for each village, and for each village by sampling point
+for (i in unique(data$Village.name..Vname.)) {
+print(i);
+t <- time.between(data$Collection.date[data$VillageName..Vname. == i]);
+print(as.double(t,units="days")); for (j in unique(data$TimePoint)) { print(c(i,j))
+    t1 <- time.between(data$Collection.date[data$VillageName..Vname. == i & data$TimePoint == j]);
+    print(as.double(t1,units="days"));
+}}
+
+#Zingoola and Katooke sampling time point 1 seem very wide.
+#which points are weird - are there outliers?
+#would plot this if many points
+
+data$Collection.date[data$Village.name..Vname. == "Zingoola" & data$Time.point..1.enrolment.pre.treatment..2.follow.up.post.treatemnt. == 1]
+data$Collection.date[data$Village.name..Vname. == "Katooke" & data$Time.point..1.enrolment.pre.treatment..2.follow.up.post.treatemnt. == 1]
+
+```
+
+
+```{r }
+pdata <- read.csv(file.choose())
+
+md.96 <- pdata %>% distinct(Infrapop_ID, .keep_all = TRUE)
+Tp1.uniq <- md.96[which(md.96$Tp=="1"), ]
+Tp2.uniq <- md.96[which(md.96$Tp=="2"), ]
+
+Tp1.uniq.int <- md.uniq[which(md.uniq$Time.point=="1" & md.uniq$Treatment=="intensive"), ]
+Tp1.uniq.std <- md.uniq[which(md.uniq$Time.point=="1" & md.uniq$Treatment=="Standard"), ]
+
+Tp2.uniq <- md.uniq[which(md.uniq$Time.point=="2"), ]
+Tp2.uniq.std <- md.uniq[which(md.uniq$Time.point=="2" & md.uniq$Treatment=="Standard"), ]
+Tp2.uniq.int <- md.uniq[which(md.uniq$Time.point=="2" & md.uniq$Treatment=="Intensive"), ]
+
+count(Tp2.uniq)
+count(Tp1.uniq)
+count(Tp1.uniq.int)
+count(Tp1.uniq.std)
+count(Tp2.uniq.std)
+count(Tp2.uniq.int)
+
+Tp2 <- pdata[which(pdata$Tp=="2"), ] #51
+Tp1 <- pdata[which(pdata$Tp=="1"), ] #123
+Tp1.uniq <- Tp1 %>% distinct(Infrapop_ID, .keep_all = TRUE) #79
+Tp2.uniq <- Tp2 %>% distinct(Infrapop_ID, .keep_all = TRUE)
+
+write.csv(Tp2, file = "Tp2.uniq.csv")
+write.csv(Tp1.uniq, file = "Tp1_79.csv")
+
+xx <- pdata %>% filter(Treatment=="Intensive", Tp == 2) # quite useful
+
+#filtering unique eggs data by infrapopID
+eggs <- read.csv(file.choose())
+eggsUniq <- eggs %>% distinct(infrapop_id, .keep_all = TRUE)
+write.csv(eggsUniq, file = "Eggs_88.csv")
+```
+
+```{r }
+
+sib <- read.delim(file.choose(), header = TRUE)
+related <- sib %>% filter(sib$Kinship>0)
+Full <- sib %>% filter(sib$Kinship>0.25)
+Monozygotic <- sib %>% filter(sib$Kinship>0.5)
+
+Related <- read.delim(file.choose(), header = TRUE)
+
+ggplot(data = Related, aes(x=IBS0, y=Kinship)) + geom_point() + theme_bw() + xlab("Proportion of Zero IBS") + ylab("Estimated Kinship Coefficient") + ggtitle("Between-Family Relationship") + theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+```{r regions_genes under selection}
+## load libraries
+library(tidyverse)
+library(knitr)
+library(readxl)
+
+setwd("/Users/tushabejohnvianney/PopGen_paper")
+
+regions_genes <- readxl::read_xlsx("Regions_genes_under_selection.xlsx")
+regions_int <- regions_genes %>% filter(Group=="Intensive")
+regions_post <- regions_genes %>% filter(Group=="Post.treatment")
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
