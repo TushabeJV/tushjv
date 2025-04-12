@@ -5,9 +5,10 @@ import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from sympy.printing.pretty.pretty_symbology import bold_unicode
 
 # read in data
-data = pd.read_csv("Gantt_12.csv", parse_dates=['Start', 'End'], dayfirst=True)
+data = pd.read_csv("Gantt_6months.csv", parse_dates=['Start', 'End'], dayfirst=True)
 
 # convert data to data frame
 gant_df = pd.DataFrame(data)
@@ -41,6 +42,7 @@ custom_colors = [
     '#ff9896',  # light red
     '#c5b0d5',  # light purple
     '#c49c94',  # light brown
+    '#ffdd44'   # dark yellow
 ]
 
 for i, row in gant_df.iterrows():
@@ -53,7 +55,7 @@ ax.yaxis.grid(True)
 ax.xaxis.grid(True)
 ax.set_ylabel('Tasks')
 ax.set_xlabel('Timeline_Dates')
-ax.set_title('12 Months Gantt Chart')
+ax.set_title('Twelve Months Gantt Chart', fontweight='bold')
 
 plt.yticks(range(len(gant_df)), gant_df['Task'], fontsize=9)
 plt.xticks(rotation=45)
