@@ -12,18 +12,19 @@ from Bio import SeqIO
 # INPUT FILES
 # ============================================================
 
-# Query contigs generated from the pit latrine
 QUERY_FASTA = "mansoni_sequences.fasta"
 
-# WBPS19 S. mansoni genome
-REFERENCE_FASTA = "schistosoma_mansoni.PRJEA36577.WBPS19.genomic.fa"
+REFERENCE_FASTA = (
+    "schistosoma_mansoni.PRJEA36577.WBPS19.genomic.fa"
+)
 
-# WBPS19 annotation
-GFF3_FILE = "schistosoma_mansoni.PRJEA36577.WBPS19.annotations.gff3"
+GFF3_FILE = (
+    "schistosoma_mansoni.PRJEA36577.WBPS19.annotations.gff3"
+)
 
 
 # ============================================================
-# OUTPUT FILES expected
+# OUTPUT FILES
 # ============================================================
 
 BLAST_DB = "smansoni_WBPS19_genome"
@@ -34,7 +35,7 @@ FINAL_OUTPUT = "mansoni_contig_gene_ids.csv"
 
 
 # ============================================================
-# BLAST PARAMETERS
+# PARAMETERS
 # ============================================================
 
 MIN_IDENTITY = 80.0
@@ -43,9 +44,12 @@ MAX_EVALUE = 1e-10
 
 THREADS = 4
 
+# Search this distance around a BLAST hit if no gene overlaps
+NEARBY_DISTANCE = 10000
+
 
 # ============================================================
-# Checking Input files
+# CHECK INPUT FILES
 # ============================================================
 
 print("\nChecking input files...")
@@ -56,10 +60,10 @@ for filename in [
     GFF3_FILE
 ]:
 
-    if not os.path.exists(filename):
+    if not os.path.isfile(filename):
 
         sys.exit(
-            f"\nERROR: File not found:\n{filename}\n"
+            f"\nERROR: Cannot find:\n{filename}\n"
         )
 
     print(f"  OK: {filename}")
@@ -76,12 +80,148 @@ contigs = list(
 )
 
 print(
-    f"Number of query contigs: {len(contigs)}"
+    f"Query contigs: {len(contigs)}"
 )
 
 
 # ============================================================
-# Creating a  BLAST database
+# PARSE GFF3 GENE FEATURES
+# ============================================================
+
+print("\nReading GFF3 gene annotations...")
+
+genes_by_seq = {}
+
+
+def parse_gff_attributes(attribute_string):
+
+    attributes = {}
+
+    for item in attribute_string.split(";"):
+
+        item = item.strip()
+
+        if not item:
+            continue
+
+        if "=" in item:
+
+            key, value = item.split(
+                "=",
+                1
+            )
+
+            attributes[key] = value
+
+    return attributes
+
+
+with open(
+    GFF3_FILE,
+    "r",
+    encoding="utf-8"
+) as gff:
+
+    for line in gff:
+
+        if line.startswith("#"):
+            continue
+
+        fields = line.rstrip("\n").split("\t")
+
+        if len(fields) != 9:
+            continue
+
+        seqid = fields[0]
+        feature_type = fields[2]
+
+        if feature_type != "gene":
+            continue
+
+        start = int(fields[3])
+        end = int(fields[4])
+
+        strand = fields[6]
+
+        attributes = parse_gff_attributes(
+            fields[8]
+        )
+
+        gene_identifier = attributes.get(
+            "ID",
+            ""
+        )
+
+        # Expected:
+        # gene:Smp_000020
+
+        match = re.search(
+            r"(Smp_\d+)",
+            gene_identifier
+        )
+
+        if match:
+
+            gene_id = match.group(1)
+
+        else:
+
+            # Try Name if ID did not work
+            name = attributes.get(
+                "Name",
+                ""
+            )
+
+            match = re.search(
+                r"(Smp_\d+)",
+                name
+            )
+
+            if match:
+
+                gene_id = match.group(1)
+
+            else:
+
+                continue
+
+        gene_record = {
+            "gene_id": gene_id,
+            "seqid": seqid,
+            "start": start,
+            "end": end,
+            "strand": strand
+        }
+
+        genes_by_seq.setdefault(
+            seqid,
+            []
+        ).append(
+            gene_record
+        )
+
+
+# Sort genes by genomic position
+
+for seqid in genes_by_seq:
+
+    genes_by_seq[seqid].sort(
+        key=lambda x: x["start"]
+    )
+
+
+total_genes = sum(
+    len(x)
+    for x in genes_by_seq.values()
+)
+
+print(
+    f"Genes loaded from GFF3: {total_genes}"
+)
+
+
+# ============================================================
+# CREATE BLAST DATABASE
 # ============================================================
 
 print("\nCreating BLAST database...")
@@ -101,7 +241,7 @@ subprocess.run(
 
 
 # ============================================================
-# Running BLASTN
+# RUN BLASTN
 # ============================================================
 
 print("\nRunning BLASTN...")
@@ -135,7 +275,7 @@ subprocess.run(
         "-outfmt",
         "6 " + " ".join(blast_fields),
         "-evalue",
-        "1e-10",
+        str(MAX_EVALUE),
         "-max_target_seqs",
         "20",
         "-num_threads",
@@ -146,17 +286,17 @@ subprocess.run(
 
 
 # ============================================================
-# Choosing the best BLAST hits
+# SELECT BEST BLAST HIT
 # ============================================================
 
-print("\nSelecting best BLAST hit for each contig...")
+print("\nSelecting best BLAST hit per contig...")
 
 best_hits = {}
 
 
-with open(BLAST_OUTPUT) as handle:
+with open(BLAST_OUTPUT) as blast:
 
-    for line in handle:
+    for line in blast:
 
         if not line.strip():
             continue
@@ -167,7 +307,7 @@ with open(BLAST_OUTPUT) as handle:
             qseqid,
             sseqid,
             pident,
-            length,
+            alignment_length,
             mismatch,
             gapopen,
             qstart,
@@ -181,17 +321,35 @@ with open(BLAST_OUTPUT) as handle:
         ) = fields
 
         pident = float(pident)
-        length = int(length)
+        alignment_length = int(
+            alignment_length
+        )
+
+        qstart = int(qstart)
+        qend = int(qend)
+
+        sstart = int(sstart)
+        send = int(send)
+
         evalue = float(evalue)
         bitscore = float(bitscore)
+
         qlen = int(qlen)
 
-        # Calculate query coverage
-        coverage = (
-                           length / qlen
-                   ) * 100
+        # ----------------------------------------------------
+        # CORRECT QUERY COVERAGE
+        # ----------------------------------------------------
 
-        # Apply filters
+        aligned_query_length = (
+            abs(qend - qstart) + 1
+        )
+
+        coverage = (
+            aligned_query_length
+            / qlen
+        ) * 100
+
+
         if pident < MIN_IDENTITY:
             continue
 
@@ -201,26 +359,28 @@ with open(BLAST_OUTPUT) as handle:
         if evalue > MAX_EVALUE:
             continue
 
-        start = min(
-            int(sstart),
-            int(send)
+
+        genomic_start = min(
+            sstart,
+            send
         )
 
-        end = max(
-            int(sstart),
-            int(send)
+        genomic_end = max(
+            sstart,
+            send
         )
 
         strand = (
             "+"
-            if int(sstart) <= int(send)
+            if sstart <= send
             else "-"
         )
 
+
         hit = {
             "reference": sseqid,
-            "start": start,
-            "end": end,
+            "start": genomic_start,
+            "end": genomic_end,
             "strand": strand,
             "identity": pident,
             "coverage": coverage,
@@ -228,172 +388,74 @@ with open(BLAST_OUTPUT) as handle:
             "bitscore": bitscore
         }
 
-        # Keep highest bitscore
+
         if (
-                qseqid not in best_hits
-                or bitscore >
-                best_hits[qseqid]["bitscore"]
+            qseqid not in best_hits
+            or bitscore >
+               best_hits[qseqid]["bitscore"]
         ):
 
             best_hits[qseqid] = hit
 
 
 print(
-    f"Contigs with acceptable BLAST hits: "
+    f"Contigs with BLAST hits: "
     f"{len(best_hits)}"
 )
 
-# ============================================================
-# Parse GFF3 attributes to get sm gene IDs
-# ============================================================
-
-def parse_attributes(attribute_string):
-
-    attributes = {}
-
-    for item in attribute_string.split(";"):
-
-        item = item.strip()
-
-        if not item:
-            continue
-
-        if "=" in item:
-
-            key, value = item.split(
-                "=",
-                1
-            )
-
-            attributes[key] = value
-
-        elif " " in item:
-
-            key, value = item.split(
-                None,
-                1
-            )
-
-            attributes[key] = value.strip('"')
-
-    return attributes
-
 
 # ============================================================
-# Read in the gff3 file
-# ============================================================
-
-print("\nReading GFF3 annotation...")
-
-genes = []
-
-
-with open(
-        GFF3_FILE,
-        encoding="utf-8"
-) as gff:
-
-    for line in gff:
-
-        if line.startswith("#"):
-            continue
-
-        fields = line.rstrip().split("\t")
-
-        if len(fields) != 9:
-            continue
-
-        seqid = fields[0]
-        feature_type = fields[2]
-
-        start = int(fields[3])
-        end = int(fields[4])
-
-        strand = fields[6]
-
-        attributes = parse_attributes(
-            fields[8]
-        )
-
-        # We only need gene features
-        if feature_type.lower() != "gene":
-            continue
-
-        gene_id = (
-                attributes.get("ID")
-                or attributes.get("gene_id")
-                or attributes.get("gene")
-        )
-
-        if not gene_id:
-            continue
-
-        genes.append(
-            {
-                "seqid": seqid,
-                "start": start,
-                "end": end,
-                "strand": strand,
-                "gene_id": gene_id
-            }
-        )
-
-
-print(
-    f"Number of gene annotations loaded: "
-    f"{len(genes)}"
-)
-
-
-# ============================================================
-# FIND GENE OVERLAPPING BLAST HIT
+# FIND OVERLAPPING GENES
 # ============================================================
 
 def find_overlapping_genes(
-        chromosome,
-        start,
-        end
+    chromosome,
+    hit_start,
+    hit_end
 ):
 
     matches = []
 
-    for gene in genes:
+    if chromosome not in genes_by_seq:
+        return matches
 
-        if gene["seqid"] != chromosome:
+    for gene in genes_by_seq[chromosome]:
+
+        # No overlap possible
+        if gene["end"] < hit_start:
             continue
 
-        # Check overlap
-        if (
-                start <= gene["end"]
-                and end >= gene["start"]
-        ):
+        # Since genes are sorted, stop when beyond hit
+        if gene["start"] > hit_end:
+            break
 
-            overlap_start = max(
-                start,
-                gene["start"]
-            )
+        overlap_start = max(
+            hit_start,
+            gene["start"]
+        )
 
-            overlap_end = min(
-                end,
-                gene["end"]
-            )
+        overlap_end = min(
+            hit_end,
+            gene["end"]
+        )
+
+        if overlap_start <= overlap_end:
 
             overlap_length = (
-                    overlap_end
-                    - overlap_start
-                    + 1
+                overlap_end
+                - overlap_start
+                + 1
             )
 
             matches.append(
-                (
-                    gene,
-                    overlap_length
-                )
+                {
+                    "gene": gene,
+                    "overlap": overlap_length
+                }
             )
 
-    # Sort by largest overlap
     matches.sort(
-        key=lambda x: x[1],
+        key=lambda x: x["overlap"],
         reverse=True
     )
 
@@ -401,42 +463,76 @@ def find_overlapping_genes(
 
 
 # ============================================================
-# CLEAN GENE ID
+# FIND NEARBY GENES
 # ============================================================
 
-def clean_gene_id(gene_id):
+def find_nearby_genes(
+    chromosome,
+    hit_start,
+    hit_end
+):
 
-    """
-    Extract standard Smp_XXXXXX ID.
+    nearby = []
 
-    Example:
+    if chromosome not in genes_by_seq:
+        return nearby
 
-        gene:Smp_123450
-        Smp_123450
-        Smp_123450.1
-
-    becomes:
-
-        Smp_123450
-    """
-
-    match = re.search(
-        r"(Smp_\d+)",
-        gene_id
+    search_start = (
+        hit_start
+        - NEARBY_DISTANCE
     )
 
-    if match:
+    search_end = (
+        hit_end
+        + NEARBY_DISTANCE
+    )
 
-        return match.group(1)
+    for gene in genes_by_seq[chromosome]:
 
-    return gene_id
+        if gene["end"] < search_start:
+            continue
+
+        if gene["start"] > search_end:
+            break
+
+        # Calculate distance
+        if gene["end"] < hit_start:
+
+            distance = (
+                hit_start
+                - gene["end"]
+            )
+
+        elif gene["start"] > hit_end:
+
+            distance = (
+                gene["start"]
+                - hit_end
+            )
+
+        else:
+
+            distance = 0
+
+        nearby.append(
+            {
+                "gene": gene,
+                "distance": distance
+            }
+        )
+
+    nearby.sort(
+        key=lambda x: x["distance"]
+    )
+
+    return nearby
 
 
 # ============================================================
-# GENERATE FINAL RESULTS
+# MAP CONTIGS TO GENES
 # ============================================================
 
-print("\nMapping BLAST hits to GFF3 genes...")
+print("\nMapping BLAST hits to genes...")
 
 results = []
 
@@ -445,12 +541,18 @@ for record in contigs:
 
     contig_id = record.id
 
+
+    # --------------------------------------------------------
+    # NO BLAST HIT
+    # --------------------------------------------------------
+
     if contig_id not in best_hits:
 
         results.append(
             {
                 "contig_id": contig_id,
                 "gene_id": "NO_BLAST_HIT",
+                "assignment": "NO_BLAST_HIT",
                 "reference": "",
                 "start": "",
                 "end": "",
@@ -459,7 +561,9 @@ for record in contigs:
                 "coverage": "",
                 "evalue": "",
                 "bitscore": "",
-                "gene_overlap": ""
+                "gene_overlap": "",
+                "nearest_gene": "",
+                "nearest_gene_distance": ""
             }
         )
 
@@ -469,42 +573,97 @@ for record in contigs:
     hit = best_hits[contig_id]
 
 
-    overlapping_genes = (
-        find_overlapping_genes(
-            hit["reference"],
-            hit["start"],
-            hit["end"]
-        )
+    # --------------------------------------------------------
+    # FIND DIRECT GENE OVERLAP
+    # --------------------------------------------------------
+
+    overlapping = find_overlapping_genes(
+        hit["reference"],
+        hit["start"],
+        hit["end"]
     )
 
 
-    if overlapping_genes:
+    if overlapping:
 
-        gene, overlap_length = (
-            overlapping_genes[0]
-        )
+        best_gene = overlapping[0]
 
-        gene_id = clean_gene_id(
-            gene["gene_id"]
-        )
+        gene = best_gene["gene"]
 
         results.append(
             {
                 "contig_id": contig_id,
-                "gene_id": gene_id,
+                "gene_id": gene["gene_id"],
+                "assignment": "DIRECT_GENE_OVERLAP",
                 "reference": hit["reference"],
                 "start": hit["start"],
                 "end": hit["end"],
                 "strand": hit["strand"],
                 "identity": round(
-                    hit["identity"], 2
+                    hit["identity"],
+                    2
                 ),
                 "coverage": round(
-                    hit["coverage"], 2
+                    hit["coverage"],
+                    2
                 ),
                 "evalue": hit["evalue"],
                 "bitscore": hit["bitscore"],
-                "gene_overlap": overlap_length
+                "gene_overlap": best_gene[
+                    "overlap"
+                ],
+                "nearest_gene": "",
+                "nearest_gene_distance": ""
+            }
+        )
+
+        continue
+
+
+    # --------------------------------------------------------
+    # NO DIRECT OVERLAP
+    # LOOK FOR NEAREST GENE
+    # --------------------------------------------------------
+
+    nearby = find_nearby_genes(
+        hit["reference"],
+        hit["start"],
+        hit["end"]
+    )
+
+
+    if nearby:
+
+        nearest = nearby[0]
+
+        nearest_gene = nearest["gene"]
+
+        results.append(
+            {
+                "contig_id": contig_id,
+                "gene_id": "NO_DIRECT_OVERLAP",
+                "assignment": "NEARBY_GENE",
+                "reference": hit["reference"],
+                "start": hit["start"],
+                "end": hit["end"],
+                "strand": hit["strand"],
+                "identity": round(
+                    hit["identity"],
+                    2
+                ),
+                "coverage": round(
+                    hit["coverage"],
+                    2
+                ),
+                "evalue": hit["evalue"],
+                "bitscore": hit["bitscore"],
+                "gene_overlap": 0,
+                "nearest_gene": nearest_gene[
+                    "gene_id"
+                ],
+                "nearest_gene_distance": nearest[
+                    "distance"
+                ]
             }
         )
 
@@ -513,51 +672,62 @@ for record in contigs:
         results.append(
             {
                 "contig_id": contig_id,
-                "gene_id": "NO_GENE_OVERLAP",
+                "gene_id": "NO_GENE_FOUND",
+                "assignment": "INTERGENIC_OR_UNANNOTATED",
                 "reference": hit["reference"],
                 "start": hit["start"],
                 "end": hit["end"],
                 "strand": hit["strand"],
                 "identity": round(
-                    hit["identity"], 2
+                    hit["identity"],
+                    2
                 ),
                 "coverage": round(
-                    hit["coverage"], 2
+                    hit["coverage"],
+                    2
                 ),
                 "evalue": hit["evalue"],
                 "bitscore": hit["bitscore"],
-                "gene_overlap": 0
+                "gene_overlap": 0,
+                "nearest_gene": "",
+                "nearest_gene_distance": ""
             }
         )
 
 
 # ============================================================
-# WRITE CSV
+# WRITE OUTPUT
 # ============================================================
 
-print("\nWriting final output...")
+print("\nWriting final CSV...")
+
+fieldnames = [
+    "contig_id",
+    "gene_id",
+    "assignment",
+    "reference",
+    "start",
+    "end",
+    "strand",
+    "identity",
+    "coverage",
+    "evalue",
+    "bitscore",
+    "gene_overlap",
+    "nearest_gene",
+    "nearest_gene_distance"
+]
+
 
 with open(
-        FINAL_OUTPUT,
-        "w",
-        newline=""
+    FINAL_OUTPUT,
+    "w",
+    newline=""
 ) as output:
 
     writer = csv.DictWriter(
         output,
-        fieldnames=[
-            "contig_id",
-            "gene_id",
-            "reference",
-            "start",
-            "end",
-            "strand",
-            "identity",
-            "coverage",
-            "evalue",
-            "bitscore",
-            "gene_overlap"
-        ]
+        fieldnames=fieldnames
     )
 
     writer.writeheader()
@@ -571,35 +741,62 @@ with open(
 
 total = len(results)
 
-identified = sum(
+direct = sum(
     1
     for r in results
-    if r["gene_id"].startswith("Smp_")
+    if r["assignment"]
+    == "DIRECT_GENE_OVERLAP"
+)
+
+nearby = sum(
+    1
+    for r in results
+    if r["assignment"]
+    == "NEARBY_GENE"
 )
 
 no_blast = sum(
     1
     for r in results
-    if r["gene_id"] == "NO_BLAST_HIT"
+    if r["assignment"]
+    == "NO_BLAST_HIT"
 )
 
-no_gene = sum(
+intergenic = sum(
     1
     for r in results
-    if r["gene_id"] == "NO_GENE_OVERLAP"
+    if r["assignment"]
+    == "INTERGENIC_OR_UNANNOTATED"
 )
 
 
 print("\n============================================")
-print("          ANALYSIS COMPLETE")
+print("           ANALYSIS COMPLETE")
 print("============================================")
 
-print(f"Total contigs:          {total}")
-print(f"Gene IDs identified:    {identified}")
-print(f"No BLAST hit:           {no_blast}")
-print(f"No gene overlap:        {no_gene}")
+print(
+    f"Total contigs:              {total}"
+)
 
-print("\nFinal output:")
-print(f"  {FINAL_OUTPUT}")
+print(
+    f"Direct gene assignments:    {direct}"
+)
+
+print(
+    f"Nearby gene candidates:     {nearby}"
+)
+
+print(
+    f"No BLAST hit:               {no_blast}"
+)
+
+print(
+    f"Intergenic/unannotated:     {intergenic}"
+)
+
+print("\nOutput:")
+print(
+    f"  {FINAL_OUTPUT}"
+)
 
 print("============================================")
